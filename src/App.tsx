@@ -55,6 +55,8 @@ export default function App() {
           <span className="page-header__sub">Kursy średnie NBP</span>
         </header>
 
+        <div className="layout">
+          <div>
         <section className="card">
           <h2>Transakcja</h2>
 
@@ -101,16 +103,29 @@ export default function App() {
             {liczenie ? 'Pobieranie kursu z NBP…' : 'Przelicz na złote'}
           </button>
         </section>
+          </div>
 
-        {blad ? (
-          <section className="card">
-            <p className="error" role="alert">
-              {blad}
-            </p>
-          </section>
-        ) : null}
+          <div className="results">
+            {blad ? (
+              <section className="card">
+                <p className="error" role="alert">
+                  {blad}
+                </p>
+              </section>
+            ) : null}
 
-        {wynik ? <ResultPanel wynik={wynik} /> : null}
+            {wynik ? (
+              <ResultPanel wynik={wynik} />
+            ) : blad ? null : (
+              <section className="card">
+                <h2>Wynik przeliczenia</h2>
+                <p className="placeholder">
+                  Wpisz kwotę, wskaż walutę i datę, a następnie kliknij „Przelicz na złote”.
+                </p>
+              </section>
+            )}
+          </div>
+        </div>
 
         <p className="disclaimer">
           Kursy pochodzą bezpośrednio z serwisu NBP. Wynik jest wyliczeniem pomocniczym, nie poradą

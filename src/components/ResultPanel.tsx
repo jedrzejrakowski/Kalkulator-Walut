@@ -76,8 +76,9 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
         </li>
       </ul>
 
-      <h3 className="subhead">Podstawa prawna</h3>
-      <ul className="legal">
+      <details className="legal-box">
+        <summary>Podstawa prawna</summary>
+        <ul className="legal">
         <li>
           art. 11a ust. 2 ustawy o PIT oraz art. 15 ust. 1 ustawy o CIT — przeliczenie według kursu
           średniego NBP z ostatniego dnia roboczego poprzedzającego dzień poniesienia kosztu
@@ -85,8 +86,9 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
         <li>
           art. 31a ust. 1 ustawy o VAT — ten sam kurs stosuje się do podstawy opodatkowania
           wyrażonej w walucie obcej
-        </li>
-      </ul>
+          </li>
+        </ul>
+      </details>
     </section>
   );
 }
