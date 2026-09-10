@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CurrencyPicker } from './components/CurrencyPicker';
+import { Logo } from './components/Logo';
 import { DateField, NumberField } from './components/fields';
 import { ResultPanel } from './components/ResultPanel';
 import { TitleBar } from './components/TitleBar';
@@ -49,11 +50,9 @@ export default function App() {
       <TitleBar />
       <div className="page">
         <header className="page-header">
-          <img className="page-header__mark" src="./icons/icon.svg" alt="" width="44" height="44" />
-          <div>
-            <h1>Kalkulator walut</h1>
-            <span className="page-header__sub">Kursy średnie NBP</span>
-          </div>
+          <Logo size={64} className="page-header__mark" />
+          <h1>Kalkulator walut</h1>
+          <span className="page-header__sub">Kursy średnie NBP</span>
         </header>
 
         <section className="card">
