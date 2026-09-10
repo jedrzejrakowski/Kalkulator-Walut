@@ -1,5 +1,5 @@
 import { poPolsku } from '../domain/dates';
-import { formatPln } from '../domain/money';
+import { formatAmount, formatPln } from '../domain/money';
 import type { Przeliczenie } from '../domain/types';
 
 const formatKursu = new Intl.NumberFormat('pl-PL', {
@@ -17,7 +17,7 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
       <div className="big-result">
         <span className="big-result__value">{formatPln(wynik.wynikPln)}</span>
         <span className="big-result__label">
-          za {formatKursu.format(wynik.kwota)} {kurs.kod}
+          za {formatAmount(wynik.kwota)} {kurs.kod}
         </span>
       </div>
 
@@ -64,7 +64,7 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
       <ul className="notes">
         <li>
           Do księgowania przyjmij <strong>{formatPln(wynik.wynikPln)}</strong> jako równowartość{' '}
-          {formatKursu.format(wynik.kwota)} {kurs.kod}.
+          {formatAmount(wynik.kwota)} {kurs.kod}.
         </li>
         <li>
           Na dowodzie opisz kurs: {formatKursu.format(kurs.kurs)} zł za 1 {kurs.kod}, tabela{' '}

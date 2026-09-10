@@ -195,6 +195,7 @@ h3 {
 
 input[type='text'],
 input[type='date'],
+input[type='search'],
 select {
   width: 100%;
   padding: 9px 11px;
@@ -209,6 +210,7 @@ select {
 
 input[type='text']:focus,
 input[type='date']:focus,
+input[type='search']:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
@@ -356,8 +358,8 @@ table.figures {
 table.figures th,
 table.figures td {
   text-align: left;
-  padding: 8px 0;
-  font-size: 14px;
+  padding: 10px 0;
+  font-size: 14.5px;
   font-weight: 400;
   border-bottom: 1px solid var(--border);
 }
@@ -372,7 +374,7 @@ table.figures td {
   text-align: right;
   white-space: nowrap;
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: 14.5px;
 }
 
 table.figures .row-note {
@@ -567,24 +569,26 @@ ul.legal {
 /* --- elementy właściwe kalkulatorowi walut --- */
 
 .big-result {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px;
-  padding: 4px 0 16px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
+  display: grid;
+  gap: 4px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
 }
 
 .big-result__value {
   font-family: var(--font-mono);
-  font-size: clamp(26px, 6vw, 34px);
+  font-size: clamp(30px, 7vw, 42px);
   font-weight: 650;
+  line-height: 1.1;
   letter-spacing: -0.02em;
-  color: var(--accent);
+  /* Kolor tekstu podstawowego, nie akcentu — na jasnym tle akcent zlewał się z kartą. */
+  color: var(--text);
 }
 
-.big-result__label { font-size: 13px; color: var(--text-muted); }
+.big-result__label { font-size: 13.5px; color: var(--text-muted); }
 
 .pill {
   display: inline-block;
@@ -629,3 +633,70 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
 }
 
 .muted-note { font-size: 12.5px; color: var(--text-muted); }
+
+/* --- wybór waluty --- */
+
+.segmented { display: flex; width: 100%; }
+.segmented button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+.segmented__count {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+.segmented button[aria-pressed='true'] .segmented__count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.picker__search { margin-top: 10px; }
+
+.picker__list {
+  list-style: none;
+  margin: 10px 0 8px;
+  padding: 4px;
+  max-height: 232px;
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  display: grid;
+  gap: 2px;
+}
+
+.picker__item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 9px;
+  cursor: pointer;
+}
+
+.picker__item:hover { background: var(--accent-soft); }
+.picker__item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.picker__item--on {
+  background: var(--accent);
+  color: #fff;
+}
+
+.picker__item--on:hover { background: var(--accent); }
+.picker__item--on .pill { border-color: rgba(255, 255, 255, 0.5); color: #fff; background: transparent; }
+
+.picker__code { font-family: var(--font-mono); font-weight: 600; }
+.picker__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.picker__empty { padding: 14px 10px; font-size: 13px; color: var(--text-muted); text-align: center; }

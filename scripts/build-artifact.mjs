@@ -42,5 +42,5 @@ ${js}
 
 const out = join(root, 'dist-artifact');
 mkdirSync(out, { recursive: true });
-writeFileSync(join(out, 'kalkulator.html'), html);
-console.log(`Zapisano ${join(out, 'kalkulator.html')} — ${(html.length / 1024).toFixed(0)} kB`);
+writeFileSync(join(out, 'kalkulator-walut.html'), html);
+console.log(`Zapisano ${join(out, 'kalkulator-walut.html')} — ${(html.length / 1024).toFixed(0)} kB`);

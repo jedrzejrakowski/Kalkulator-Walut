@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { CurrencyPicker } from './components/CurrencyPicker';
 import { DateField, NumberField } from './components/fields';
 import { ResultPanel } from './components/ResultPanel';
 import { TitleBar } from './components/TitleBar';
@@ -6,11 +7,6 @@ import { przelicz } from './domain/convert';
 import { dzisiaj, poPolsku, poprzedniDzienRoboczy } from './domain/dates';
 import { pobierzWaluty } from './domain/nbp';
 import type { Przeliczenie, Waluta } from './domain/types';
-
-const OPIS_TABEL = {
-  A: 'Tabela A — ogłaszana w każdy dzień roboczy',
-  B: 'Tabela B — ogłaszana raz w tygodniu, w środy',
-} as const;
 
 export default function App() {
   const [waluty, setWaluty] = useState<Waluta[]>([]);
@@ -32,13 +28,6 @@ export default function App() {
       aktualne = false;
     };
   }, []);
-
-  const pogrupowane = useMemo(() => {
-    return (['A', 'B'] as const).map((tabela) => ({
-      tabela,
-      pozycje: waluty.filter((w) => w.tabela === tabela),
-    }));
-  }, [waluty]);
 
   const gotowe = kwota > 0 && kod.trim().length === 3 && data !== '';
 
@@ -78,23 +67,11 @@ export default function App() {
             suffix={kod || '—'}
           />
 
-          <label className="field">
-            <span className="field-label">Waluta</span>
-            {waluty.length > 0 ? (
-              <select value={kod} onChange={(e) => setKod(e.target.value)}>
-                {pogrupowane.map(({ tabela, pozycje }) =>
-                  pozycje.length === 0 ? null : (
-                    <optgroup key={tabela} label={OPIS_TABEL[tabela]}>
-                      {pozycje.map((w) => (
-                        <option key={`${tabela}-${w.kod}`} value={w.kod}>
-                          {w.kod} — {w.nazwa}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ),
-                )}
-              </select>
-            ) : (
+          {waluty.length > 0 ? (
+            <CurrencyPicker waluty={waluty} wybrany={kod} onWybor={setKod} />
+          ) : (
+            <label className="field">
+              <span className="field-label">Waluta</span>
               <input
                 type="text"
                 value={kod}
@@ -102,15 +79,13 @@ export default function App() {
                 placeholder="EUR"
                 onChange={(e) => setKod(e.target.value.toUpperCase())}
               />
-            )}
-            <span className="field-hint">
-              {waluty.length > 0
-                ? `${waluty.length} walut z tabel NBP. Waluty azjatyckie znajdziesz najczęściej w tabeli B.`
-                : bladWalut
+              <span className="field-hint">
+                {bladWalut
                   ? 'Lista walut niedostępna — wpisz trzyliterowy kod ręcznie.'
                   : 'Pobieranie listy walut z NBP…'}
-            </span>
-          </label>
+              </span>
+            </label>
+          )}
 
           <DateField
             label="Data zdarzenia gospodarczego"
