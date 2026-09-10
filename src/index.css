@@ -1,0 +1,631 @@
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-alt: #f8f9fb;
+  --border: #dfe2e8;
+  --border-strong: #c6cbd4;
+  --text: #1b1f27;
+  --text-muted: #626a78;
+  --accent: #166b5c;
+  --accent-soft: #e2f1ed;
+  --kup: #1f6f43;
+  --kup-soft: #e4f2ea;
+  --nkup: #9a4a17;
+  --nkup-soft: #fbeee4;
+  --statutory: #5a4a94;
+  --statutory-soft: #eeebf8;
+  --warn-bg: #fdf6e3;
+  --warn-border: #e8d8a8;
+  --titlebar-bg: #166b5c;
+  --titlebar-ink: #ffffff;
+  --titlebar-line: rgba(255, 255, 255, 0.32);
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(20, 25, 35, 0.06), 0 4px 12px rgba(20, 25, 35, 0.04);
+  color-scheme: light;
+}
+
+/* Motyw ciemny musi zadziałać w trzech stanach: bez atrybutu na <html> decyduje
+   preferencja systemu, a jawny wybór czytelnika stemplowany jako data-theme
+   wygrywa w obie strony. Tokeny są więc definiowane pod oboma selektorami. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #14171d;
+    --surface: #1c2027;
+    --surface-alt: #22262f;
+    --border: #303743;
+    --border-strong: #414a59;
+    --text: #e7eaef;
+    --text-muted: #9aa3b2;
+    --accent: #6ecab4;
+    --accent-soft: #132c27;
+    --kup: #6cc294;
+    --kup-soft: #1a2c23;
+    --nkup: #e2a274;
+    --nkup-soft: #2e231a;
+    --statutory: #a99adf;
+    --statutory-soft: #24203a;
+    --warn-bg: #2a2517;
+    --warn-border: #4a4128;
+    --titlebar-bg: #114036;
+    --titlebar-ink: #eaf2f8;
+    --titlebar-line: rgba(234, 242, 248, 0.28);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #14171d;
+  --surface: #1c2027;
+  --surface-alt: #22262f;
+  --border: #303743;
+  --border-strong: #414a59;
+  --text: #e7eaef;
+  --text-muted: #9aa3b2;
+  --accent: #6ecab4;
+  --accent-soft: #132c27;
+  --kup: #6cc294;
+  --kup-soft: #1a2c23;
+  --nkup: #e2a274;
+  --nkup-soft: #2e231a;
+  --statutory: #a99adf;
+  --statutory-soft: #24203a;
+  --warn-bg: #2a2517;
+  --warn-border: #4a4128;
+  --titlebar-bg: #114036;
+  --titlebar-ink: #eaf2f8;
+  --titlebar-line: rgba(234, 242, 248, 0.28);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 72px;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-header h1 {
+  font-size: 26px;
+}
+
+.page-header p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+
+.layout {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.page { max-width: 720px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.card + .card {
+  margin-top: 20px;
+}
+
+.card > h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.card-hint {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.card > .field:last-child,
+.card > .stack:last-child > .field:last-child {
+  margin-bottom: 0;
+}
+
+.stack {
+  margin-top: 16px;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.field-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+/* Komunikat o zaokrągleniu wskaźnika musi być widoczny — zmienia wynik. */
+.field-hint-active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+input[type='text'],
+input[type='date'],
+select {
+  width: 100%;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input[type='text']:focus,
+input[type='date']:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.input-suffix {
+  position: relative;
+}
+
+.input-suffix input {
+  padding-right: 44px;
+}
+
+.input-suffix span {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.grid-2 {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 520px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.choice-group {
+  display: grid;
+  gap: 8px;
+}
+
+.choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.choice:hover {
+  border-color: var(--accent);
+}
+
+.choice input {
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+
+.choice-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.choice > span {
+  display: block;
+  min-width: 0;
+}
+
+.choice-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.choice-desc {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--surface-alt);
+}
+
+.segmented button {
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border-strong);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.headline-value {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.headline-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+table.figures {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+table.figures th,
+table.figures td {
+  text-align: left;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+
+table.figures tr:last-child th,
+table.figures tr:last-child td {
+  border-bottom: 0;
+}
+
+table.figures td {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 13.5px;
+}
+
+table.figures .row-note {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.row-kup td,
+.row-kup th {
+  color: var(--kup);
+}
+
+.row-nkup td,
+.row-nkup th {
+  color: var(--nkup);
+}
+
+.row-statutory td,
+.row-statutory th {
+  color: var(--statutory);
+}
+
+.row-total th,
+.row-total td {
+  font-weight: 650;
+  border-top: 1px solid var(--border-strong);
+}
+
+.subhead {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 20px 0 8px;
+  font-weight: 600;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.steps li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 14px;
+  font-size: 13px;
+  padding: 8px 11px;
+  background: var(--surface-alt);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.steps li span:first-child {
+  color: var(--text-muted);
+}
+
+.steps li span:last-child {
+  font-weight: 500;
+}
+
+ul.notes {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+  font-size: 13.5px;
+}
+
+ul.notes li {
+  padding-left: 2px;
+}
+
+ul.legal {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.warning {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.warning:last-of-type {
+  margin-bottom: 0;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.disclaimer {
+  margin-top: 24px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  max-width: 78ch;
+}
+
+/* --- pasek tytułu zainstalowanej aplikacji --- */
+
+.app-titlebar { display: none; }
+
+/* Tryb włącza się dopiero wtedy, gdy system odda aplikacji obszar paska.
+   W karcie przeglądarki nagłówek pozostaje ukryty. */
+@media (display-mode: window-controls-overlay) {
+  .app-titlebar {
+    position: fixed;
+    top: env(titlebar-area-y, 0);
+    left: env(titlebar-area-x, 0);
+    width: env(titlebar-area-width, 100%);
+    height: env(titlebar-area-height, 38px);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    background: var(--titlebar-bg);
+    color: var(--titlebar-ink);
+    z-index: 20;
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  .app-titlebar__name {
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-titlebar__action {
+    margin-left: auto;
+    font: inherit;
+    font-size: 11.5px;
+    color: var(--titlebar-ink);
+    background: transparent;
+    border: 1px solid var(--titlebar-line);
+    border-radius: 5px;
+    padding: 3px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+
+  .app-titlebar__action:hover { background: var(--titlebar-line); }
+  .app-titlebar__action:focus-visible { outline: 2px solid var(--titlebar-ink); outline-offset: 1px; }
+
+  .page { padding-top: calc(env(titlebar-area-height, 38px) + 24px); }
+}
+
+/* --- wydruk dekretu --- */
+
+@media print {
+  body { background: #ffffff; }
+
+  .app-titlebar { display: none; }
+
+  .page { max-width: none; padding: 0; }
+
+  .layout { display: block; }
+
+  .card {
+    box-shadow: none;
+    border-color: #cfd4dc;
+    break-inside: avoid;
+    margin-bottom: 12px;
+  }
+
+  .results { position: static; }
+}
+
+/* --- elementy właściwe kalkulatorowi walut --- */
+
+.big-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.big-result__value {
+  font-family: var(--font-mono);
+  font-size: clamp(26px, 6vw, 34px);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.big-result__label { font-size: 13px; color: var(--text-muted); }
+
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.pill--a { border-color: var(--kup); color: var(--kup); background: var(--kup-soft); }
+.pill--b { border-color: var(--nkup); color: var(--nkup); background: var(--nkup-soft); }
+
+button.primary {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+button.primary:hover { opacity: 0.9; }
+button.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.error {
+  background: var(--nkup-soft);
+  border: 1px solid var(--nkup);
+  color: var(--nkup);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+}
+
+.muted-note { font-size: 12.5px; color: var(--text-muted); }

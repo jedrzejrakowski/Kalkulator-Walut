@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Nowy push do gałęzi unieważnia poprzedni, jeszcze trwający przebieg.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  testy:
+    name: Testy i build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: Kontrola typów
+        run: npx tsc -b
+
+      - name: Testy logiki podatkowej
+        run: npm test
+
+      - name: Build produkcyjny
+        run: npm run build

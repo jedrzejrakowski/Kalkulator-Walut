@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kalkulator walut NBP">
+  <rect width="64" height="64" fill="#166b5c"/>
+  <g transform="translate(9.6 9.6) scale(0.7)">
+    <path d="M14 22 H44 L38 16" fill="none" stroke="#6ecab4" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="32" y="49" text-anchor="middle" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="27" font-weight="700" fill="#ffffff">zł</text>
+  </g>
+</svg>

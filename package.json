@@ -1,0 +1,30 @@
+{
+  "name": "kalkulator-walut-nbp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Przeliczanie walut na złote według kursu średniego NBP z dnia poprzedzającego zdarzenie gospodarcze",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:artifact": "npm run build && node scripts/build-artifact.mjs"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.3"
+  }
+}
