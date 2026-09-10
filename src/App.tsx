@@ -49,12 +49,11 @@ export default function App() {
       <TitleBar />
       <div className="page">
         <header className="page-header">
-          <h1>Kalkulator walut NBP</h1>
-          <p>
-            Przelicza kwotę w walucie obcej na złote według kursu średniego z ostatniego dnia
-            roboczego poprzedzającego zdarzenie gospodarcze. Obsługuje obie tabele — codzienną A
-            oraz tygodniową B, w której NBP ogłasza waluty rynków wschodzących.
-          </p>
+          <img className="page-header__mark" src="./icons/icon.svg" alt="" width="44" height="44" />
+          <div>
+            <h1>Kalkulator walut</h1>
+            <span className="page-header__sub">Kursy średnie NBP</span>
+          </div>
         </header>
 
         <section className="card">

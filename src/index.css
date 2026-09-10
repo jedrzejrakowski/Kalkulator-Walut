@@ -5,7 +5,7 @@
   --border: #dfe2e8;
   --border-strong: #c6cbd4;
   --text: #1b1f27;
-  --text-muted: #626a78;
+  --text-muted: #49505e;
   --accent: #166b5c;
   --accent-soft: #e2f1ed;
   --kup: #1f6f43;
@@ -38,7 +38,7 @@
     --border: #303743;
     --border-strong: #414a59;
     --text: #e7eaef;
-    --text-muted: #9aa3b2;
+    --text-muted: #a7b0bf;
     --accent: #6ecab4;
     --accent-soft: #132c27;
     --kup: #6cc294;
@@ -64,7 +64,7 @@
   --border: #303743;
   --border-strong: #414a59;
   --text: #e7eaef;
-  --text-muted: #9aa3b2;
+  --text-muted: #a7b0bf;
   --accent: #6ecab4;
   --accent-soft: #132c27;
   --kup: #6cc294;
@@ -111,17 +111,36 @@ h3 {
 }
 
 .page-header {
-  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 18px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header__mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  flex: none;
+  box-shadow: 0 1px 2px rgba(20, 25, 35, 0.12);
 }
 
 .page-header h1 {
-  font-size: 26px;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.15;
 }
 
-.page-header p {
-  margin: 8px 0 0;
+.page-header__sub {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
-  max-width: 62ch;
+  margin-top: 3px;
 }
 
 .layout {
@@ -175,14 +194,15 @@ h3 {
 
 .field-label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
   margin-bottom: 6px;
 }
 
 .field-hint {
   display: block;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
   margin-top: 5px;
 }
@@ -360,7 +380,7 @@ table.figures td {
   text-align: left;
   padding: 10px 0;
   font-size: 14.5px;
-  font-weight: 400;
+  font-weight: 500;
   border-bottom: 1px solid var(--border);
 }
 
@@ -373,8 +393,9 @@ table.figures td {
   font-family: var(--font-mono);
   text-align: right;
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14.5px;
+  color: var(--text);
 }
 
 table.figures .row-note {
@@ -448,8 +469,8 @@ ul.notes {
   margin: 0;
   padding-left: 18px;
   display: grid;
-  gap: 7px;
-  font-size: 13.5px;
+  gap: 8px;
+  font-size: 14px;
 }
 
 ul.notes li {
@@ -581,14 +602,14 @@ ul.legal {
 .big-result__value {
   font-family: var(--font-mono);
   font-size: clamp(30px, 7vw, 42px);
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
   /* Kolor tekstu podstawowego, nie akcentu — na jasnym tle akcent zlewał się z kartą. */
   color: var(--text);
 }
 
-.big-result__label { font-size: 13.5px; color: var(--text-muted); }
+.big-result__label { font-size: 14px; font-weight: 500; color: var(--text-muted); }
 
 .pill {
   display: inline-block;
@@ -675,7 +696,8 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
   align-items: center;
   gap: 10px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
+  font-weight: 500;
   text-align: left;
   color: var(--text);
   background: transparent;
