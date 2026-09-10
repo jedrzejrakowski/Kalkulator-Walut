@@ -127,11 +127,6 @@ export default function App() {
           </div>
         </div>
 
-        <p className="disclaimer">
-          Kursy pochodzą bezpośrednio z serwisu NBP. Wynik jest wyliczeniem pomocniczym, nie poradą
-          podatkową — przy transakcjach nietypowych, zaliczkach i różnicach kursowych sprawdź zasady
-          właściwe dla danego zdarzenia.
-        </p>
       </div>
     </>
   );

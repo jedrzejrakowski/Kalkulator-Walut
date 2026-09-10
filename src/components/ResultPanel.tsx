@@ -88,6 +88,11 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
           wyrażonej w walucie obcej
           </li>
         </ul>
+        <p className="legal-box__note">
+          Kursy pochodzą bezpośrednio z serwisu NBP. Wynik jest wyliczeniem pomocniczym, nie poradą
+          podatkową — przy transakcjach nietypowych, zaliczkach i różnicach kursowych obowiązują
+          zasady właściwe dla danego zdarzenia.
+        </p>
       </details>
     </section>
   );

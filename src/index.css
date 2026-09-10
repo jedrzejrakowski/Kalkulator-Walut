@@ -155,12 +155,29 @@ h3 {
 @media (min-width: 940px) {
   .layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
   }
 
-  .results {
-    position: sticky;
-    top: 24px;
+  /* Obie kolumny kończą się na tej samej wysokości. */
+  .layout > div {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
+
+  .layout > div > .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .layout > div > .card + .card { margin-top: 0; }
+
+  /* Przycisk przy dolnej krawędzi — wolne miejsce wygląda wtedy na zamierzone. */
+  .layout > div > .card > button.primary { margin-top: auto; }
+
+  /* Zwijana podstawa prawna zamyka kartę wyniku od dołu. */
+  .layout > div > .card > details.legal-box { margin-top: auto; }
 }
 
 .card {
@@ -776,4 +793,13 @@ details.legal-box ul.legal { margin-top: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
   details.legal-box > summary::before { transition: none; }
+}
+
+.legal-box__note {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
