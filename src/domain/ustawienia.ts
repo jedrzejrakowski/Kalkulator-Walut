@@ -7,8 +7,12 @@
  */
 
 export type Motyw = 'system' | 'jasny' | 'ciemny';
-export type Paleta = 'morski' | 'granatowy' | 'grafitowy' | 'bordowy';
-export type Krój = 'plex' | 'systemowy' | 'verdana' | 'georgia';
+export type Paleta =
+  | 'morski' | 'granatowy' | 'grafitowy' | 'bordowy'
+  | 'lesny' | 'sliwkowy' | 'miedziany' | 'indygo';
+export type Krój =
+  | 'plex' | 'systemowy' | 'verdana' | 'tahoma'
+  | 'trebuchet' | 'arial' | 'georgia' | 'times';
 
 export interface Ustawienia {
   motyw: Motyw;
@@ -33,6 +37,15 @@ interface Odcienie {
   titlebarBg: string;
 }
 
+/**
+ * Kolor napisu na wypełnieniu w kolorze wiodącym.
+ *
+ * W motywie jasnym kolor wiodący jest ciemny, więc napis musi być biały.
+ * W ciemnym jest odwrotnie: kolor wiodący jaśnieje, żeby odcinać się od tła,
+ * a wtedy biały napis na nim znika. Stąd ciemny atrament w wariancie ciemnym.
+ */
+export const ATRAMENT = { jasny: '#ffffff', ciemny: '#0f1319' } as const;
+
 interface OpisPalety {
   nazwa: string;
   jasny: Odcienie;
@@ -55,17 +68,37 @@ export const PALETY: Record<Paleta, OpisPalety> = {
   granatowy: {
     nazwa: 'Granatowy',
     jasny: { accent: '#1f5f8b', accentSoft: '#e7f0f7', titlebarBg: '#1f5f8b' },
-    ciemny: { accent: '#6fb3e0', accentSoft: '#1b2b38', titlebarBg: '#163b52' },
+    ciemny: { accent: '#7cbde8', accentSoft: '#1b2b38', titlebarBg: '#163b52' },
   },
-  grafitowy: {
-    nazwa: 'Grafitowy',
-    jasny: { accent: '#3f4654', accentSoft: '#ecedf1', titlebarBg: '#3f4654' },
-    ciemny: { accent: '#aab3c4', accentSoft: '#272c35', titlebarBg: '#2b313c' },
+  indygo: {
+    nazwa: 'Indygo',
+    jasny: { accent: '#3f4a9c', accentSoft: '#e9eaf7', titlebarBg: '#3f4a9c' },
+    ciemny: { accent: '#9fa8e8', accentSoft: '#20233a', titlebarBg: '#282e5e' },
+  },
+  sliwkowy: {
+    nazwa: 'Śliwkowy',
+    jasny: { accent: '#6b3a7a', accentSoft: '#f2e9f5', titlebarBg: '#6b3a7a' },
+    ciemny: { accent: '#c79ad4', accentSoft: '#2b2131', titlebarBg: '#3f2349' },
   },
   bordowy: {
     nazwa: 'Bordowy',
     jasny: { accent: '#8a3245', accentSoft: '#f8e9ec', titlebarBg: '#8a3245' },
-    ciemny: { accent: '#e094a4', accentSoft: '#332227', titlebarBg: '#4a222c' },
+    ciemny: { accent: '#e59aa9', accentSoft: '#332227', titlebarBg: '#4a222c' },
+  },
+  miedziany: {
+    nazwa: 'Miedziany',
+    jasny: { accent: '#8c4a1e', accentSoft: '#f9ece2', titlebarBg: '#8c4a1e' },
+    ciemny: { accent: '#e0a473', accentSoft: '#322520', titlebarBg: '#4c2c14' },
+  },
+  lesny: {
+    nazwa: 'Leśny',
+    jasny: { accent: '#3c6b28', accentSoft: '#e8f1e3', titlebarBg: '#3c6b28' },
+    ciemny: { accent: '#9ccb85', accentSoft: '#1f2a1a', titlebarBg: '#2a4a1c' },
+  },
+  grafitowy: {
+    nazwa: 'Grafitowy',
+    jasny: { accent: '#3f4654', accentSoft: '#ecedf1', titlebarBg: '#3f4654' },
+    ciemny: { accent: '#b6bfd0', accentSoft: '#272c35', titlebarBg: '#2b313c' },
   },
 };
 
@@ -79,7 +112,17 @@ export const KROJE: Record<Krój, { nazwa: string; stos: string }> = {
     stos: "system-ui, 'Segoe UI', Roboto, -apple-system, Arial, sans-serif",
   },
   verdana: { nazwa: 'Verdana', stos: "Verdana, Geneva, 'DejaVu Sans', sans-serif" },
+  tahoma: { nazwa: 'Tahoma', stos: "Tahoma, Verdana, 'DejaVu Sans', sans-serif" },
+  trebuchet: {
+    nazwa: 'Trebuchet MS',
+    stos: "'Trebuchet MS', 'Lucida Grande', 'DejaVu Sans', sans-serif",
+  },
+  arial: { nazwa: 'Arial', stos: "Arial, Helvetica, 'Liberation Sans', sans-serif" },
   georgia: { nazwa: 'Georgia', stos: "Georgia, 'Times New Roman', 'DejaVu Serif', serif" },
+  times: {
+    nazwa: 'Times New Roman',
+    stos: "'Times New Roman', Times, 'Liberation Serif', serif",
+  },
 };
 
 const KLUCZ = 'kalkulator-walut:ustawienia';
@@ -132,6 +175,7 @@ export function zastosuj(ustawienia: Ustawienia, korzeń: HTMLElement, systemCie
   korzeń.style.setProperty('--skala', String(ustawienia.skala));
   korzeń.style.setProperty('--font-sans', KROJE[ustawienia.krój].stos);
   korzeń.style.setProperty('--accent', odcienie.accent);
+  korzeń.style.setProperty('--accent-ink', ciemny ? ATRAMENT.ciemny : ATRAMENT.jasny);
   korzeń.style.setProperty('--accent-soft', odcienie.accentSoft);
   korzeń.style.setProperty('--titlebar-bg', odcienie.titlebarBg);
 }

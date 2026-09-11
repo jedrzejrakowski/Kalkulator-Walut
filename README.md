@@ -38,8 +38,14 @@ wróciło.
 ## Ustawienia wyglądu
 
 Zębatka w prawym górnym rogu otwiera panel: motyw jasny, ciemny albo za systemem,
-cztery palety kolorów, cztery kroje pisma i cztery wielkości. Wybór zapamiętuje się
+osiem palet kolorów, osiem krojów pisma i cztery wielkości. Wybór zapamiętuje się
 między uruchomieniami.
+
+Każda paleta niesie osobne odcienie dla motywu jasnego i ciemnego, a napis na
+wypełnieniu w kolorze wiodącym ma własny token. W motywie ciemnym kolor wiodący
+jaśnieje, żeby odcinać się od tła — biały napis by wtedy na nim zniknął, więc
+atrament staje się ciemny. Testy w `kontrast.test.ts` liczą stosunek kontrastu
+według WCAG dla każdej palety w obu motywach i pilnują progu 4,5.
 
 Panel nie przerysowuje niczego samodzielnie — podmienia wartości tych samych zmiennych
 CSS, których używa motyw jasny i ciemny. Dlatego rozmiary pisma są w jednostce względnej,

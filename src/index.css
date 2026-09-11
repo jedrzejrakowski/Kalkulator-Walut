@@ -5,6 +5,9 @@ html {
 
 :root {
   --skala: 1;
+  /* Napis na wypełnieniu w kolorze wiodącym; panel ustawień podmienia go
+     na ciemny w motywie ciemnym, gdzie kolor wiodący jaśnieje. */
+  --accent-ink: #ffffff;
   --bg: #f4f5f7;
   --surface: #ffffff;
   --surface-alt: #f8f9fb;
@@ -375,7 +378,7 @@ select:focus {
 
 .segmented button[aria-pressed='true'] {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-weight: 500;
 }
 
@@ -665,7 +668,7 @@ button.primary {
   font: inherit;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #fff;
+  color: var(--accent-ink);
   background: var(--accent);
   border: 0;
   border-radius: 8px;
@@ -704,8 +707,8 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
 }
 
 .segmented button[aria-pressed='true'] .segmented__count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent-ink) 24%, transparent);
+  color: var(--accent-ink);
 }
 
 .picker__search { margin-top: 10px; }
@@ -746,11 +749,16 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
 
 .picker__item--on {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .picker__item--on:hover { background: var(--accent); }
-.picker__item--on .pill { border-color: rgba(255, 255, 255, 0.5); color: #fff; background: transparent; }
+
+.picker__item--on .pill {
+  border-color: color-mix(in srgb, var(--accent-ink) 55%, transparent);
+  color: var(--accent-ink);
+  background: transparent;
+}
 
 .picker__code { font-family: var(--font-mono); font-weight: 600; }
 .picker__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
