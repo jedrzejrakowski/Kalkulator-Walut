@@ -2,9 +2,17 @@ import { poPolsku } from '../domain/dates';
 import { formatAmount, formatPln } from '../domain/money';
 import type { Przeliczenie } from '../domain/types';
 
+/**
+ * Kurs pokazujemy z pełną dokładnością, jaką podaje NBP.
+ *
+ * Przy sześciu miejscach po przecinku kurs dongu wyświetlał się jako
+ * 0,000143, a wyliczenie szło na dokładniejszej liczbie z API — przez co
+ * pomnożenie kwoty przez kurs widoczny na ekranie nie odtwarzało wyniku.
+ * Na dowodzie księgowym rachunek musi się zgadzać co do grosza.
+ */
 const formatKursu = new Intl.NumberFormat('pl-PL', {
   minimumFractionDigits: 4,
-  maximumFractionDigits: 6,
+  maximumFractionDigits: 10,
 });
 
 export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {

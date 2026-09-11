@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BladNbp, pobierzKurs, pobierzWaluty } from '../nbp';
-import { przelicz, zloz } from '../convert';
+import { doGroszy, przelicz, zloz } from '../convert';
 import type { Kurs } from '../types';
 
 const brak = () => new Response('404 NotFound', { status: 404 });
@@ -113,5 +113,19 @@ describe('przeliczenie', () => {
     const wynik = await przelicz(1000, 'EUR', '2026-06-24', pobierz as unknown as typeof fetch);
     expect(pobierz.mock.calls[0]![0]).toContain('/2026-06-23/?format=json');
     expect(wynik.wynikPln).toBe(4256.7);
+  });
+});
+
+describe('dokładność kursu na dowodzie', () => {
+  it('kwota razy kurs odtwarza wynik dla walut o małej wartości jednostkowej', () => {
+    // Dong wietnamski: przy kursie skróconym do sześciu miejsc milion dongów
+    // dawał 143,00 zamiast 143,09 — dziewięć groszy różnicy na dowodzie.
+    const kurs: Kurs = {
+      kod: 'VND', nazwa: 'dong (Wietnam)', tabela: 'B',
+      numerTabeli: '036/B/NBP/2026', kurs: 0.00014309, dataTabeli: '2026-09-09',
+    };
+    const wynik = zloz(1_000_000, '2026-09-11', kurs);
+    expect(wynik.wynikPln).toBe(143.09);
+    expect(doGroszy(wynik.kwota * kurs.kurs)).toBe(wynik.wynikPln);
   });
 });
