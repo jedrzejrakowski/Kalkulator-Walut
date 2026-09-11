@@ -963,3 +963,121 @@ button.primary--waski { width: auto; padding: 9px 20px; }
 @media (max-width: 480px) {
   .swatche, .kroje { grid-template-columns: 1fr; }
 }
+
+/* --- wykres kursu --- */
+
+.wykres svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  cursor: crosshair;
+}
+
+.wykres__siatka {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.wykres__opis {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+}
+
+.wykres__opis--y { text-anchor: end; dominant-baseline: middle; }
+/* Oś pozioma kotwiczy podpisy w komponencie: skrajne inaczej niż środkowe. */
+
+.wykres__linia {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.wykres__punkt {
+  fill: var(--accent);
+  /* Pierścień w kolorze karty odcina punkt od linii pod nim. */
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.wykres__celownik {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+/* Dzień, z którego pochodzi kurs użyty do księgowania. */
+.wykres__ksiegowanie {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.65;
+}
+
+.wykres__punkt--ksiegowanie { fill: var(--surface); stroke: var(--accent); }
+
+.wykres__odczyt {
+  margin: 10px 0 0;
+  font-size: 0.84375rem;
+  color: var(--text-muted);
+  min-height: 1.4em;
+}
+
+.wykres__odczyt strong { color: var(--text); font-family: var(--font-mono); }
+
+.wykres__znacznik {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.6875rem;
+  padding: 1px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.zakresy { display: flex; gap: 6px; margin-bottom: 12px; }
+
+.zakresy button {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.zakresy button:hover { border-color: var(--accent); color: var(--accent); }
+.zakresy button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.zakresy button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+table.szereg {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+}
+
+table.szereg th,
+table.szereg td {
+  text-align: left;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+table.szereg td { text-align: right; font-family: var(--font-mono); color: var(--text); }
+table.szereg thead th { color: var(--text-muted); font-weight: 600; }
+
+.szereg-box { max-height: 240px; overflow-y: auto; margin-top: 10px; }

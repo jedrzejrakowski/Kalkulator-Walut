@@ -1,5 +1,6 @@
 import { przesun, type DataIso } from './dates';
 import type { Kurs, Tabela, Waluta } from './types';
+import type { Punkt } from './wykres';
 
 const BAZA = 'https://api.nbp.pl/api/exchangerates';
 
@@ -129,4 +130,41 @@ export async function pobierzKurs(
     `NBP nie ogłosił kursu ${kod.toUpperCase()} w ciągu ${OKNO_DNI} dni przed ${doDnia}. ` +
       'Sprawdź, czy kod waluty jest poprawny i czy data nie wypada przed jej pierwszym notowaniem.',
   );
+}
+
+export interface Seria {
+  kod: string;
+  nazwa: string;
+  tabela: Tabela;
+  punkty: Punkt[];
+}
+
+/**
+ * Szereg kursów z zakresu dat.
+ *
+ * NBP przyjmuje zakres do 367 dni w jednym zapytaniu, więc rok mieści się
+ * w jednym wywołaniu. Tabela B da mniej punktów niż A, bo ogłaszana jest raz
+ * w tygodniu — i to jest informacja sama w sobie, a nie brak danych.
+ */
+export async function pobierzSerie(
+  kod: string,
+  od: DataIso,
+  doDnia: DataIso,
+  pobierz: Pobieracz = fetch,
+): Promise<Seria> {
+  for (const tabela of ['A', 'B'] as Tabela[]) {
+    const dane = await pobierzJson<OdpowiedzKursu>(
+      `${BAZA}/rates/${tabela.toLowerCase()}/${kod.toLowerCase()}/${od}/${doDnia}/?format=json`,
+      pobierz,
+    );
+    if (dane?.rates?.length) {
+      return {
+        kod: dane.code,
+        nazwa: dane.currency,
+        tabela: dane.table,
+        punkty: dane.rates.map((r) => ({ data: r.effectiveDate, kurs: r.mid })),
+      };
+    }
+  }
+  throw new BladNbp(`NBP nie ogłosił kursów ${kod.toUpperCase()} w okresie od ${od} do ${doDnia}.`);
 }

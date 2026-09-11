@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BladNbp, pobierzKurs, pobierzWaluty } from '../nbp';
+import { BladNbp, pobierzKurs, pobierzSerie, pobierzWaluty } from '../nbp';
 import { doGroszy, przelicz, zloz } from '../convert';
 import type { Kurs } from '../types';
 
@@ -191,5 +191,43 @@ describe('przeliczanie między walutami obcymi', () => {
     const w = await przelicz(1000, 'EUR', '2026-06-24', 'EUR', pobierz as unknown as typeof fetch);
     expect(pobierz).toHaveBeenCalledTimes(1);
     expect(w.kursDocelowy).toBeNull();
+  });
+});
+
+describe('szereg kursów', () => {
+  const szereg = (tabela: string, kod: string, pary: [string, number][]) =>
+    json({
+      table: tabela, currency: 'waluta', code: kod,
+      rates: pary.map(([effectiveDate, mid], i) => ({ no: `${i}/${tabela}/NBP/2026`, effectiveDate, mid })),
+    });
+
+  it('zwraca wszystkie punkty z zakresu', async () => {
+    const pobierz = vi.fn(async (url: string) =>
+      url.includes('/rates/a/eur/')
+        ? szereg('A', 'EUR', [['2026-09-08', 4.25], ['2026-09-09', 4.26], ['2026-09-10', 4.24]])
+        : brak(),
+    );
+    const s = await pobierzSerie('EUR', '2026-09-01', '2026-09-10', pobierz as unknown as typeof fetch);
+    expect(s.punkty).toHaveLength(3);
+    expect(s.punkty[0]).toEqual({ data: '2026-09-08', kurs: 4.25 });
+    expect(s.tabela).toBe('A');
+  });
+
+  it('sięga do tabeli B, gdy waluty nie ma w tabeli A', async () => {
+    const pobierz = vi.fn(async (url: string) =>
+      url.includes('/rates/b/vnd/')
+        ? szereg('B', 'VND', [['2026-09-02', 0.000143], ['2026-09-09', 0.000144]])
+        : brak(),
+    );
+    const s = await pobierzSerie('VND', '2026-09-01', '2026-09-10', pobierz as unknown as typeof fetch);
+    // Tabela tygodniowa daje rzadsze punkty — to cecha danych, nie brak.
+    expect(s.punkty).toHaveLength(2);
+    expect(s.tabela).toBe('B');
+  });
+
+  it('mówi wprost, gdy w okresie nie ma żadnej tabeli', async () => {
+    const pobierz = vi.fn(async (_url: string) => brak());
+    await expect(pobierzSerie('XYZ', '2026-09-01', '2026-09-10', pobierz as unknown as typeof fetch))
+      .rejects.toThrow(/nie ogłosił kursów/);
   });
 });

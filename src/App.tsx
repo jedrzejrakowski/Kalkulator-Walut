@@ -3,6 +3,7 @@ import { CurrencyPicker } from './components/CurrencyPicker';
 import { Logo } from './components/Logo';
 import { PanelUstawien } from './components/PanelUstawien';
 import { DateField, NumberField } from './components/fields';
+import { KartaWykresu } from './components/KartaWykresu';
 import { ResultPanel } from './components/ResultPanel';
 import { TitleBar } from './components/TitleBar';
 import { przelicz, ZLOTY } from './domain/convert';
@@ -185,7 +186,14 @@ export default function App() {
             ) : null}
 
             {wynik ? (
-              <ResultPanel wynik={wynik} />
+              <>
+                <ResultPanel wynik={wynik} />
+                <KartaWykresu
+                  kod={wynik.kurs.kod}
+                  doDnia={wynik.dataWymagana}
+                  dataKsiegowania={wynik.kurs.dataTabeli}
+                />
+              </>
             ) : blad ? null : (
               <section className="card">
                 <h2>Wynik przeliczenia</h2>

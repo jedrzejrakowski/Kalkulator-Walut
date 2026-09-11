@@ -41,6 +41,24 @@ a przy okazji poprawna obsługa świąt oraz tygodniowego rytmu tabeli B.
 Gdy kurs pochodzi z dnia wcześniejszego niż wymagany, aplikacja mówi o tym wprost i wyjaśnia
 dlaczego — święto albo tygodniowa tabela B.
 
+## Wykres historyczny
+
+Pod wynikiem rysuje się przebieg kursu z ostatnich 30, 90 albo 365 dni — z tych samych
+tabel NBP, z których liczy się księgowanie. Przerywana pionowa kreska i pierścień
+wskazują dzień kursu użytego do przeliczenia, żeby było widać, czy wypadł on wysoko,
+czy nisko na tle okresu.
+
+Najechanie kursorem czyta wartość z najbliższego notowania; sekcja *Notowania w tabeli*
+podaje ten sam szereg liczbami, dla czytników ekranu i do przeklejenia.
+
+Geometria siedzi w `src/domain/wykres.ts` jako czysta matematyka — skale, kreski osi
+i ścieżki — więc testy sprawdzają, że każda podpisana kreska mieści się w zakresie,
+a punkty nie wychodzą poza pole rysowania. Wykres rysowany jest w jednostkach równych
+pikselom kontenera: gdyby ramka miała stałą szerokość, na telefonie przeglądarka
+przeskalowałaby rysunek razem z podpisami osi i daty stałyby się nieczytelne.
+
+Zakres ograniczony jest do roku, bo API NBP nie przyjmuje dłuższych okresów.
+
 ## Daty
 
 Wszystkie rachunki na datach idą po UTC, a zegar lokalny czyta wyłącznie funkcja `dzisiaj`.
@@ -94,6 +112,7 @@ src/domain/     logika niezależna od interfejsu
   dates.ts      daty kalendarzowe bez pułapki stref czasowych
   nbp.ts        klient API: lista walut oraz kurs z przejściem A → B
   convert.ts    złożenie wyniku i zaokrąglenie do groszy
+  wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
 src/components/ interfejs
 ```
 
