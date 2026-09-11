@@ -35,6 +35,18 @@ Mieszanie `toISOString()` z `getDate()` powoduje, że latem między północą a
 data cofa się o dobę — testy w `src/domain/__tests__/dates.test.ts` pilnują, żeby to nie
 wróciło.
 
+## Ustawienia wyglądu
+
+Zębatka w prawym górnym rogu otwiera panel: motyw jasny, ciemny albo za systemem,
+cztery palety kolorów, cztery kroje pisma i cztery wielkości. Wybór zapamiętuje się
+między uruchomieniami.
+
+Panel nie przerysowuje niczego samodzielnie — podmienia wartości tych samych zmiennych
+CSS, których używa motyw jasny i ciemny. Dlatego rozmiary pisma są w jednostce względnej,
+a nie w pikselach: jedno pokrętło skaluje całą typografię.
+
+Kroje systemowe działają bez pobierania z sieci, co ma znaczenie za firmowym filtrem.
+
 ## Uruchomienie
 
 ```bash
