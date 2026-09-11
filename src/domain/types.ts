@@ -23,17 +23,31 @@ export interface Kurs {
 
 export interface Przeliczenie {
   kwota: number;
+  /** Kurs waluty, w której wyrażona jest kwota wejściowa. */
   kurs: Kurs;
+  /**
+   * Kurs waluty docelowej; null, gdy celem jest złoty.
+   *
+   * NBP ogłasza wszystkie kursy względem złotego, więc przeliczenie między
+   * dwiema walutami obcymi prowadzi przez złotego. Tej samej drogi wymaga
+   * art. 11a ust. 2 ustawy o PIT, więc metoda najprostsza technicznie jest
+   * zarazem jedyną poprawną podatkowo.
+   */
+  kursDocelowy: Kurs | null;
   /** Data zdarzenia gospodarczego wskazana przez użytkownika. */
   dataZdarzenia: DataIso;
   /** Dzień, z którego kurs powinien pochodzić według przepisów. */
   dataWymagana: DataIso;
-  /** Iloczyn kwoty i kursu, zaokrąglony do groszy. */
+  /** Wartość w złotych — zawsze wyliczana, bo to ona trafia do ksiąg. */
   wynikPln: number;
+  /** Wartość w walucie docelowej; null, gdy celem jest złoty. */
+  wynikDocelowy: number | null;
+  /** Ile jednostek waluty docelowej przypada na jednostkę źródłowej. */
+  kursKrzyzowy: number | null;
   /**
-   * Prawda, gdy tabela pochodzi z wcześniejszego dnia niż wymagany — bo NBP
-   * jej wtedy nie ogłosił. Przy tabeli B to sytuacja normalna, bo ogłaszana
-   * jest raz w tygodniu.
+   * Prawda, gdy którakolwiek tabela pochodzi z wcześniejszego dnia niż
+   * wymagany — bo NBP jej wtedy nie ogłosił. Przy tabeli B to sytuacja
+   * normalna, bo ogłaszana jest raz w tygodniu.
    */
   kursStarszyNizWymagany: boolean;
 }

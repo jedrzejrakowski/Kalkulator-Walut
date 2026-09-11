@@ -19,6 +19,19 @@ stałe spisu kodów: NBP przenosi waluty między tabelami i dopisuje nowe, więc
 w kodzie zdezaktualizowałaby się bez ostrzeżenia. Gdy API jest nieosiągalne, kod waluty
 można wpisać ręcznie.
 
+## Przeliczanie między walutami obcymi
+
+Waluta docelowa inna niż złoty prowadzi przeliczenie przez złotego: kwota razy kurs
+źródłowy daje wartość w złotych, a ta podzielona przez kurs docelowy daje wynik.
+NBP ogłasza wszystkie kursy względem złotego, więc innej drogi nie ma — i tej samej
+wymaga art. 11a ust. 2 ustawy o PIT, który zakazuje kursów krzyżowych z rynku.
+
+Wartość w złotych zaokrąglana jest do groszy przed dalszym przeliczeniem, bo to ona
+trafia do ksiąg. Dzięki temu rachunek pokazany na ekranie odtwarza się krok po kroku.
+
+Obie waluty mogą pochodzić z różnych tabel, a wtedy także z różnych dni — tabela B
+bywa starsza, bo ogłaszana jest raz w tygodniu. Wynik pokazuje obie tabele osobno.
+
 ## Wyszukiwanie kursu
 
 Zamiast odpytywać API dzień po dniu, aplikacja pobiera **zakres szesnastu dni** kończący się

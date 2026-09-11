@@ -110,7 +110,7 @@ describe('przeliczenie', () => {
 
   it('pobiera kurs na dzień poprzedzający zdarzenie', async () => {
     const pobierz = vi.fn(async (_url: string) => kursZTabeli('A', 'EUR', 'euro', 4.2567, '2026-06-23'));
-    const wynik = await przelicz(1000, 'EUR', '2026-06-24', pobierz as unknown as typeof fetch);
+    const wynik = await przelicz(1000, 'EUR', '2026-06-24', 'PLN', pobierz as unknown as typeof fetch);
     expect(pobierz.mock.calls[0]![0]).toContain('/2026-06-23/?format=json');
     expect(wynik.wynikPln).toBe(4256.7);
   });
@@ -127,5 +127,69 @@ describe('dokładność kursu na dowodzie', () => {
     const wynik = zloz(1_000_000, '2026-09-11', kurs);
     expect(wynik.wynikPln).toBe(143.09);
     expect(doGroszy(wynik.kwota * kurs.kurs)).toBe(wynik.wynikPln);
+  });
+});
+
+describe('przeliczanie między walutami obcymi', () => {
+  const eur: Kurs = {
+    kod: 'EUR', nazwa: 'euro', tabela: 'A', numerTabeli: '120/A/NBP/2026',
+    kurs: 4.2567, dataTabeli: '2026-06-23',
+  };
+  const usd: Kurs = {
+    kod: 'USD', nazwa: 'dolar amerykański', tabela: 'A', numerTabeli: '120/A/NBP/2026',
+    kurs: 3.7111, dataTabeli: '2026-06-23',
+  };
+
+  it('prowadzi przeliczenie przez złotego', () => {
+    // 1000 EUR to 4256,70 zł, a to z kolei 1147,02 USD.
+    const w = zloz(1000, '2026-06-24', eur, usd);
+    expect(w.wynikPln).toBe(4256.7);
+    expect(w.wynikDocelowy).toBe(1147.02);
+  });
+
+  it('pokazany rachunek odtwarza się krok po kroku', () => {
+    // Zaokrąglenie na złotym jest celowe: to ta kwota trafia do ksiąg,
+    // więc dalsze przeliczenie musi wychodzić właśnie z niej.
+    const w = zloz(1000, '2026-06-24', eur, usd);
+    expect(doGroszy(w.kwota * w.kurs.kurs)).toBe(w.wynikPln);
+    expect(doGroszy(w.wynikPln / usd.kurs)).toBe(w.wynikDocelowy);
+  });
+
+  it('podaje kurs krzyżowy', () => {
+    const w = zloz(1000, '2026-06-24', eur, usd);
+    expect(w.kursKrzyzowy).toBeCloseTo(4.2567 / 3.7111, 10);
+  });
+
+  it('przy celu w złotych nie ma kursu docelowego', () => {
+    const w = zloz(1000, '2026-06-24', eur);
+    expect(w.kursDocelowy).toBeNull();
+    expect(w.wynikDocelowy).toBeNull();
+    expect(w.kursKrzyzowy).toBeNull();
+  });
+
+  it('starsza tabela po którejkolwiek stronie jest sygnalizowana', () => {
+    // EUR z czwartku, dong ze środy — tabela B jest tygodniowa.
+    const dong: Kurs = { ...usd, kod: 'VND', tabela: 'B', dataTabeli: '2026-06-17', kurs: 0.00014309 };
+    expect(zloz(1000, '2026-06-24', eur, dong).kursStarszyNizWymagany).toBe(true);
+    expect(zloz(1000, '2026-06-24', eur, usd).kursStarszyNizWymagany).toBe(false);
+  });
+
+  it('pobiera oba kursy na ten sam wymagany dzień', async () => {
+    const pobierz = vi.fn(async (url: string) =>
+      url.includes('/eur/')
+        ? kursZTabeli('A', 'EUR', 'euro', 4.2567, '2026-06-23')
+        : kursZTabeli('A', 'USD', 'dolar', 3.7111, '2026-06-23'),
+    );
+    const w = await przelicz(1000, 'EUR', '2026-06-24', 'USD', pobierz as unknown as typeof fetch);
+    expect(pobierz).toHaveBeenCalledTimes(2);
+    for (const [url] of pobierz.mock.calls) expect(url).toContain('/2026-06-23/?format=json');
+    expect(w.wynikDocelowy).toBe(1147.02);
+  });
+
+  it('ta sama waluta po obu stronach nie pobiera drugiego kursu', async () => {
+    const pobierz = vi.fn(async (_url: string) => kursZTabeli('A', 'EUR', 'euro', 4.2567, '2026-06-23'));
+    const w = await przelicz(1000, 'EUR', '2026-06-24', 'EUR', pobierz as unknown as typeof fetch);
+    expect(pobierz).toHaveBeenCalledTimes(1);
+    expect(w.kursDocelowy).toBeNull();
   });
 });

@@ -15,15 +15,30 @@ const formatKursu = new Intl.NumberFormat('pl-PL', {
   maximumFractionDigits: 10,
 });
 
+/**
+ * Kurs krzyżowy podajemy w cyfrach znaczących, nie w miejscach po przecinku.
+ *
+ * Miejsca po przecinku sprawdzają się źle przy obu krańcach: dla kursu koło
+ * jedności dawały ścianę zer i cyfr, a dla walut o małej wartości jednostkowej
+ * ucinały wynik do zera. Osiem cyfr znaczących wystarcza, żeby pomnożenie
+ * kwoty przez ten kurs odtworzyło wynik, i czyta się w obu przypadkach.
+ */
+const formatKrzyzowego = new Intl.NumberFormat('pl-PL', { maximumSignificantDigits: 8 });
+
 export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
-  const { kurs } = wynik;
+  const { kurs, kursDocelowy } = wynik;
+  const przezZlotego = kursDocelowy !== null;
 
   return (
     <section className="card">
       <h2>Wynik przeliczenia</h2>
 
       <div className="big-result">
-        <span className="big-result__value">{formatPln(wynik.wynikPln)}</span>
+        <span className="big-result__value">
+          {przezZlotego
+            ? `${formatAmount(wynik.wynikDocelowy!)} ${kursDocelowy.kod}`
+            : formatPln(wynik.wynikPln)}
+        </span>
         <span className="big-result__label">
           za {formatAmount(wynik.kwota)} {kurs.kod}
         </span>
@@ -32,16 +47,44 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
       <table className="figures">
         <tbody>
           <tr>
-            <th scope="row">Kurs średni NBP</th>
+            <th scope="row">
+              Kurs {kurs.kod}
+              <span className={`pill pill--${kurs.tabela.toLowerCase()}`}>{kurs.numerTabeli}</span>
+              <span className="row-note">tabela z {poPolsku(kurs.dataTabeli)}</span>
+            </th>
             <td>{formatKursu.format(kurs.kurs)} zł</td>
           </tr>
-          <tr>
-            <th scope="row">
-              Tabela
-              <span className={`pill pill--${kurs.tabela.toLowerCase()}`}>{kurs.numerTabeli}</span>
-            </th>
-            <td>{poPolsku(kurs.dataTabeli)}</td>
-          </tr>
+
+          {przezZlotego ? (
+            <>
+              <tr className="row-total">
+                <th scope="row">
+                  Wartość w złotych
+                  <span className="row-note">ta kwota trafia do ksiąg</span>
+                </th>
+                <td>{formatPln(wynik.wynikPln)}</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  Kurs {kursDocelowy.kod}
+                  <span className={`pill pill--${kursDocelowy.tabela.toLowerCase()}`}>
+                    {kursDocelowy.numerTabeli}
+                  </span>
+                  <span className="row-note">tabela z {poPolsku(kursDocelowy.dataTabeli)}</span>
+                </th>
+                <td>{formatKursu.format(kursDocelowy.kurs)} zł</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  Kurs krzyżowy
+                  <span className="row-note">
+                    {kurs.kod} na {kursDocelowy.kod}, wyliczony przez złotego
+                  </span>
+                </th>
+                <td>{formatKrzyzowego.format(wynik.kursKrzyzowy!)}</td>
+              </tr>
+            </>
+          ) : null}
           <tr>
             <th scope="row">Data zdarzenia gospodarczego</th>
             <td>{poPolsku(wynik.dataZdarzenia)}</td>
@@ -54,8 +97,12 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
             <td>{poPolsku(wynik.dataWymagana)}</td>
           </tr>
           <tr className="row-total">
-            <th scope="row">Kwota w złotych</th>
-            <td>{formatPln(wynik.wynikPln)}</td>
+            <th scope="row">{przezZlotego ? `Kwota w ${kursDocelowy.kod}` : 'Kwota w złotych'}</th>
+            <td>
+              {przezZlotego
+                ? `${formatAmount(wynik.wynikDocelowy!)} ${kursDocelowy.kod}`
+                : formatPln(wynik.wynikPln)}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -78,6 +125,19 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
           Na dowodzie opisz kurs: {formatKursu.format(kurs.kurs)} zł za 1 {kurs.kod}, tabela{' '}
           {kurs.numerTabeli} z {poPolsku(kurs.dataTabeli)}.
         </li>
+        {przezZlotego ? (
+          <li>
+            Przeliczenie na {kursDocelowy.kod} prowadzi przez złotego: {formatPln(wynik.wynikPln)}{' '}
+            podzielone przez {formatKursu.format(kursDocelowy.kurs)} zł daje{' '}
+            <strong>
+              {formatAmount(wynik.wynikDocelowy!)} {kursDocelowy.kod}
+            </strong>
+            .{' '}
+            {kurs.numerTabeli === kursDocelowy.numerTabeli
+              ? `Obie waluty pochodzą z tej samej tabeli ${kurs.numerTabeli}.`
+              : `Opisz obie tabele — ${kurs.numerTabeli} oraz ${kursDocelowy.numerTabeli}.`}
+          </li>
+        ) : null}
         <li>
           Różnice kursowe rozliczysz przy zapłacie, według kursu z dnia poprzedzającego tamto
           zdarzenie.

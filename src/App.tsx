@@ -5,7 +5,7 @@ import { PanelUstawien } from './components/PanelUstawien';
 import { DateField, NumberField } from './components/fields';
 import { ResultPanel } from './components/ResultPanel';
 import { TitleBar } from './components/TitleBar';
-import { przelicz } from './domain/convert';
+import { przelicz, ZLOTY } from './domain/convert';
 import { dzisiaj, poPolsku, poprzedniDzienRoboczy } from './domain/dates';
 import { pobierzWaluty } from './domain/nbp';
 import { wczytaj, zapisz, zastosuj, type Ustawienia } from './domain/ustawienia';
@@ -15,6 +15,7 @@ export default function App() {
   const [waluty, setWaluty] = useState<Waluta[]>([]);
   const [bladWalut, setBladWalut] = useState<string | null>(null);
   const [kod, setKod] = useState('EUR');
+  const [kodDocelowy, setKodDocelowy] = useState(ZLOTY);
   const [kwota, setKwota] = useState(0);
   const [data, setData] = useState(() => dzisiaj());
 
@@ -46,13 +47,18 @@ export default function App() {
     };
   }, []);
 
+  // Ta sama waluta po obu stronach nie ma sensu — cel wraca wtedy do złotego.
+  useEffect(() => {
+    if (kodDocelowy === kod) setKodDocelowy(ZLOTY);
+  }, [kod, kodDocelowy]);
+
   const gotowe = kwota > 0 && kod.trim().length === 3 && data !== '';
 
   async function policz() {
     setLiczenie(true);
     setBlad(null);
     try {
-      setWynik(await przelicz(kwota, kod.trim().toUpperCase(), data));
+      setWynik(await przelicz(kwota, kod.trim().toUpperCase(), data, kodDocelowy));
     } catch (e) {
       setWynik(null);
       setBlad(e instanceof Error ? e.message : 'Nie udało się pobrać kursu.');
@@ -123,6 +129,32 @@ export default function App() {
             </label>
           )}
 
+          <label className="field">
+            <span className="field-label">Przelicz na</span>
+            <select value={kodDocelowy} onChange={(e) => setKodDocelowy(e.target.value)}>
+              <option value={ZLOTY}>PLN — złoty polski</option>
+              {waluty.length > 0 ? (
+                (['A', 'B'] as const).map((tabela) => {
+                  const pozycje = waluty.filter((w) => w.tabela === tabela && w.kod !== kod);
+                  return pozycje.length === 0 ? null : (
+                    <optgroup key={tabela} label={`Tabela ${tabela}`}>
+                      {pozycje.map((w) => (
+                        <option key={`${tabela}-${w.kod}`} value={w.kod}>
+                          {w.kod} — {w.nazwa}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })
+              ) : null}
+            </select>
+            <span className="field-hint">
+              {kodDocelowy === ZLOTY
+                ? 'Wynik w złotych, tak jak wymaga tego dowód księgowy.'
+                : `Przeliczenie ${kod} na ${kodDocelowy} prowadzi przez złotego — tak ogłasza kursy NBP i tego wymaga art. 11a ust. 2 ustawy o PIT.`}
+            </span>
+          </label>
+
           <DateField
             label="Data zdarzenia gospodarczego"
             value={data}
@@ -136,7 +168,9 @@ export default function App() {
           />
 
           <button type="button" className="primary" disabled={!gotowe || liczenie} onClick={policz}>
-            {liczenie ? 'Pobieranie kursu z NBP…' : 'Przelicz na złote'}
+            {liczenie
+              ? 'Pobieranie kursu z NBP…'
+              : `Przelicz na ${kodDocelowy === ZLOTY ? 'złote' : kodDocelowy}`}
           </button>
         </section>
           </div>
