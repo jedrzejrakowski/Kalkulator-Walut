@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { filtruj } from '../domain/szukaj';
 import type { Tabela, Waluta } from '../domain/types';
 
 type Filtr = Tabela | 'wszystkie';
@@ -35,17 +36,10 @@ export function CurrencyPicker({ waluty, wybrany, onWybor }: Props) {
     [waluty],
   );
 
-  const widoczne = useMemo(() => {
-    const fraza = szukaj.trim().toLocaleLowerCase('pl');
-    return waluty.filter((w) => {
-      if (filtr !== 'wszystkie' && w.tabela !== filtr) return false;
-      if (fraza === '') return true;
-      return (
-        w.kod.toLocaleLowerCase('pl').includes(fraza) ||
-        w.nazwa.toLocaleLowerCase('pl').includes(fraza)
-      );
-    });
-  }, [waluty, filtr, szukaj]);
+  const widoczne = useMemo(
+    () => filtruj(filtr === 'wszystkie' ? waluty : waluty.filter((w) => w.tabela === filtr), szukaj),
+    [waluty, filtr, szukaj],
+  );
 
   const opis = waluty.find((w) => w.kod === wybrany);
 

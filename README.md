@@ -32,6 +32,21 @@ trafia do ksiąg. Dzięki temu rachunek pokazany na ekranie odtwarza się krok p
 Obie waluty mogą pochodzić z różnych tabel, a wtedy także z różnych dni — tabela B
 bywa starsza, bo ogłaszana jest raz w tygodniu. Wynik pokazuje obie tabele osobno.
 
+## Wybór waluty
+
+NBP ogłasza ponad sto czterdzieści walut, więc zwykła lista rozwijana przestała
+wystarczać w obu polach. Waluta źródłowa ma listę rozwiniętą na stałe, z podziałem
+na tabele; waluta docelowa — to samo szukanie zwinięte do jednego pola, bo złoty
+jako cel wystarcza w większości przeliczeń, a rozwinięta lista rozciągnęłaby
+formularz na dwa ekrany.
+
+Szukanie jest wspólne dla obu pól — `src/domain/szukaj.ts` — i pomija znaki
+diakrytyczne w obie strony: „filipinskie” trafia tak samo jak „filipińskie”.
+Nikt nie sięga po ogonki, szukając waluty w pośpiechu.
+
+Waluta źródłowa nie pojawia się na liście celów, a wybranie jej po lewej stronie
+cofa cel do złotego — przeliczenie waluty na samą siebie nie miałoby sensu.
+
 ## Wyszukiwanie kursu
 
 Zamiast odpytywać API dzień po dniu, aplikacja pobiera **zakres szesnastu dni** kończący się
@@ -112,6 +127,7 @@ src/domain/     logika niezależna od interfejsu
   dates.ts      daty kalendarzowe bez pułapki stref czasowych
   nbp.ts        klient API: lista walut oraz kurs z przejściem A → B
   convert.ts    złożenie wyniku i zaokrąglenie do groszy
+  szukaj.ts     dopasowanie waluty do frazy, wspólne dla obu pól
   wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
 src/components/ interfejs
 ```

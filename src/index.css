@@ -765,6 +765,72 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
 
 .picker__empty { padding: 14px 10px; font-size: 0.8125rem; color: var(--text-muted); text-align: center; }
 
+/* --- wybór waluty docelowej: ta sama wyszukiwarka, zwinięta do jednego pola --- */
+
+.combo {
+  position: relative;
+}
+
+/* Pole ma wyglądać jak lista rozwijana, którą zastąpiło. */
+.combo__pole {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.combo__pole:hover { border-color: var(--accent); }
+
+.combo__pole:focus-visible,
+.combo__pole[aria-expanded='true'] {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.combo__strzalka {
+  color: var(--text-muted);
+  transition: transform 0.15s;
+}
+
+.combo__pole[aria-expanded='true'] .combo__strzalka { transform: rotate(180deg); }
+
+/* Lista wypływa nad formularz, żeby otwarcie jej nie rozpychało karty. */
+.combo__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.16);
+}
+
+.combo__lista {
+  margin: 10px 0 0;
+  max-height: 216px;
+}
+
+/* Pozycja prowadzona klawiaturą — fokus zostaje w wyszukiwarce, więc
+   podświetlenie musi rysować się osobno. */
+.picker__item--wskazana { background: var(--accent-soft); }
+.picker__item--wskazana.picker__item--on { background: var(--accent); }
+
 /* --- podstawa prawna jako zwijana --- */
 
 details.legal-box {

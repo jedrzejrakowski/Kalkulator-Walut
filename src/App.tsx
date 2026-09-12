@@ -5,6 +5,7 @@ import { PanelUstawien } from './components/PanelUstawien';
 import { DateField, NumberField } from './components/fields';
 import { KartaWykresu } from './components/KartaWykresu';
 import { ResultPanel } from './components/ResultPanel';
+import { WalutaDocelowa } from './components/WalutaDocelowa';
 import { TitleBar } from './components/TitleBar';
 import { przelicz, ZLOTY } from './domain/convert';
 import { dzisiaj, poPolsku, poprzedniDzienRoboczy } from './domain/dates';
@@ -130,31 +131,17 @@ export default function App() {
             </label>
           )}
 
-          <label className="field">
-            <span className="field-label">Przelicz na</span>
-            <select value={kodDocelowy} onChange={(e) => setKodDocelowy(e.target.value)}>
-              <option value={ZLOTY}>PLN — złoty polski</option>
-              {waluty.length > 0 ? (
-                (['A', 'B'] as const).map((tabela) => {
-                  const pozycje = waluty.filter((w) => w.tabela === tabela && w.kod !== kod);
-                  return pozycje.length === 0 ? null : (
-                    <optgroup key={tabela} label={`Tabela ${tabela}`}>
-                      {pozycje.map((w) => (
-                        <option key={`${tabela}-${w.kod}`} value={w.kod}>
-                          {w.kod} — {w.nazwa}
-                        </option>
-                      ))}
-                    </optgroup>
-                  );
-                })
-              ) : null}
-            </select>
-            <span className="field-hint">
-              {kodDocelowy === ZLOTY
+          <WalutaDocelowa
+            waluty={waluty}
+            pomin={kod}
+            wybrany={kodDocelowy}
+            onWybor={setKodDocelowy}
+            hint={
+              kodDocelowy === ZLOTY
                 ? 'Wynik w złotych, tak jak wymaga tego dowód księgowy.'
-                : `Przeliczenie ${kod} na ${kodDocelowy} prowadzi przez złotego — tak ogłasza kursy NBP i tego wymaga art. 11a ust. 2 ustawy o PIT.`}
-            </span>
-          </label>
+                : `Przeliczenie ${kod} na ${kodDocelowy} prowadzi przez złotego — tak ogłasza kursy NBP i tego wymaga art. 11a ust. 2 ustawy o PIT.`
+            }
+          />
 
           <DateField
             label="Data zdarzenia gospodarczego"
