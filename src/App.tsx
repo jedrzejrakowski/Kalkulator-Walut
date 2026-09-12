@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Logo } from './components/Logo';
+import { EkranHistorii } from './components/EkranHistorii';
 import { PanelUstawien } from './components/PanelUstawien';
+import { PasekNawigacji, type Ekran } from './components/PasekNawigacji';
 import { DateField, NumberField } from './components/fields';
 import { KartaWykresu } from './components/KartaWykresu';
 import { ResultPanel } from './components/ResultPanel';
@@ -9,6 +11,7 @@ import { WalutaDocelowa } from './components/WalutaDocelowa';
 import { TitleBar } from './components/TitleBar';
 import { przelicz, ZLOTY } from './domain/convert';
 import { dzisiaj, poPolsku, poprzedniDzienRoboczy } from './domain/dates';
+import * as historiaDomena from './domain/historia';
 import { pobierzWaluty } from './domain/nbp';
 import { wczytaj, zapisz, zastosuj, type Ustawienia } from './domain/ustawienia';
 import type { Przeliczenie, Waluta } from './domain/types';
@@ -23,6 +26,9 @@ export default function App() {
 
   const [ustawienia, setUstawienia] = useState<Ustawienia>(wczytaj);
   const [panelOtwarty, setPanelOtwarty] = useState(false);
+
+  const [ekran, setEkran] = useState<Ekran>('kalkulator');
+  const [historia, setHistoria] = useState(historiaDomena.wczytaj);
 
   const [wynik, setWynik] = useState<Przeliczenie | null>(null);
   const [blad, setBlad] = useState<string | null>(null);
@@ -60,7 +66,15 @@ export default function App() {
     setLiczenie(true);
     setBlad(null);
     try {
-      setWynik(await przelicz(kwota, kod.trim().toUpperCase(), data, kodDocelowy));
+      const policzone = await przelicz(kwota, kod.trim().toUpperCase(), data, kodDocelowy);
+      setWynik(policzone);
+      // Zapis od razu po udanym przeliczeniu — historia jest przydatna tylko
+      // wtedy, gdy jest kompletna, a osobny przycisk łatwo pominąć.
+      setHistoria((poprzednia) => {
+        const nowa = historiaDomena.dopisz(poprzednia, policzone);
+        if (nowa !== poprzednia) historiaDomena.zapisz(nowa);
+        return nowa;
+      });
     } catch (e) {
       setWynik(null);
       setBlad(e instanceof Error ? e.message : 'Nie udało się pobrać kursu.');
@@ -69,9 +83,23 @@ export default function App() {
     }
   }
 
+  function usunZHistorii(id: number) {
+    setHistoria((poprzednia) => {
+      const nowa = historiaDomena.usun(poprzednia, id);
+      historiaDomena.zapisz(nowa);
+      return nowa;
+    });
+  }
+
+  function wyczyscHistorie() {
+    historiaDomena.wyczysc();
+    setHistoria([]);
+  }
+
   return (
     <>
       <TitleBar />
+      <PasekNawigacji ekran={ekran} onZmiana={setEkran} ile={historia.length} />
       <div className="page">
         <header className="page-header">
           <Logo size={64} className="page-header__mark" />
@@ -99,6 +127,14 @@ export default function App() {
           onZamknij={() => setPanelOtwarty(false)}
         />
 
+        {ekran === 'historia' ? (
+          <EkranHistorii
+            historia={historia}
+            onUsun={usunZHistorii}
+            onWyczysc={wyczyscHistorie}
+            onPowrot={() => setEkran('kalkulator')}
+          />
+        ) : (
         <div className="layout">
           <div className="kol-formularz">
         <section className="card">
@@ -201,6 +237,7 @@ export default function App() {
             )}
           </div>
         </div>
+        )}
 
       </div>
     </>

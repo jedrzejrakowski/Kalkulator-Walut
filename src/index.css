@@ -1215,3 +1215,282 @@ table.szereg td { text-align: right; font-family: var(--font-mono); color: var(-
 table.szereg thead th { color: var(--text-muted); font-weight: 600; }
 
 .szereg-box { max-height: 240px; overflow-y: auto; margin-top: 10px; }
+
+/* --- pasek ekranów --- */
+
+/*
+ * Dwa ekrany: przeliczanie i historia. Na szerokim oknie pasek stoi przy lewej
+ * krawędzi, bo w pionie każdy piksel jest potrzebny treści — po to układaliśmy
+ * karty w trzy kolumny. Na wąskim wraca do biegu strony jako rząd nad kartami,
+ * bo przyklejony pasek zabierałby telefonowi połowę i tak skąpej szerokości.
+ */
+.pasek {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.pasek__ikona {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.pasek__ikona:hover { color: var(--text); border-color: var(--border-strong); }
+
+.pasek__ikona:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.pasek__ikona--na {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pasek__licznik {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+@media (min-width: 760px) {
+  .pasek {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 25;
+    flex-direction: column;
+    gap: 10px;
+    width: 72px;
+    margin: 0;
+    padding: 20px 6px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+  }
+
+  .pasek__ikona {
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 4px;
+    border-color: transparent;
+  }
+
+  /* Podpis pod ikoną — sama ikona zegara nie mówi jeszcze „historia". */
+  .pasek__podpis { font-size: 0.625rem; }
+
+  .pasek__licznik {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+  }
+
+  /* Miejsce na pasek bierzemy z marginesu okna, nie z szerokości kart:
+     stąd max-width powiększony dokładnie o szerokość paska. Reguła stoi
+     w pliku po regułach układu, więc to ona ustala ostatnie słowo. */
+  .page { padding-left: 92px; max-width: calc(1160px + 72px); }
+}
+
+@media (min-width: 1440px) {
+  .page { max-width: calc(1640px + 72px); }
+}
+
+@media (min-width: 760px) and (display-mode: window-controls-overlay) {
+  .pasek { top: env(titlebar-area-height, 38px); }
+}
+
+@media (max-width: 759px) {
+  .pasek__podpis { font-size: 0.8125rem; }
+}
+
+/* --- historia przeliczeń --- */
+
+/* Sześć krótkich kolumn rozciągniętych na pełną szerokość monitora rozjeżdża
+   się tak, że wynik trudno powiązać z kwotą. Węższa karta trzyma je razem. */
+.kol-historia {
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+.historia__belka {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.historia__pytanie {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+button.link {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.link:hover { background: var(--accent-soft); }
+
+button.link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+button.link--ostrzegawczy { color: var(--nkup); }
+button.link--ostrzegawczy:hover { background: var(--nkup-soft); }
+
+/* Tabela bywa szersza od telefonu — przewija się sama, strona nie. */
+.historia__box {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+table.historia {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+table.historia th,
+table.historia td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+table.historia thead th {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom-color: var(--border-strong);
+}
+
+table.historia tbody tr:last-child td { border-bottom: 0; }
+table.historia tbody tr:hover { background: var(--surface-alt); }
+
+.historia__prawa { text-align: right !important; }
+
+.historia__data,
+.historia__kurs,
+.historia__tabela,
+.historia__wynik { font-family: var(--font-mono); }
+
+.historia__tabela { font-size: 0.75rem; }
+
+/* Druga linia komórki: kontekst, który nie może rywalizować z liczbą. */
+.historia__zdnia {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.historia__cel { color: var(--text-muted); }
+
+/*
+ * Na telefonie wiersz tabeli nie mieści się nawet w połowie — przewijanie
+ * w bok pokazywałoby naraz dwie kolumny z sześciu. Każde przeliczenie staje
+ * się wtedy kafelkiem: te same dane, tylko jedno pod drugim.
+ */
+@media (max-width: 759px) {
+  .historia__box { overflow-x: visible; }
+
+  table.historia thead { display: none; }
+
+  table.historia,
+  table.historia tbody,
+  table.historia tr,
+  table.historia td {
+    display: block;
+    width: auto;
+  }
+
+  table.historia tr {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+
+  table.historia tbody tr:hover { background: transparent; }
+
+  table.historia td {
+    border: 0;
+    padding: 3px 0;
+    white-space: normal;
+  }
+
+  table.historia td[data-etykieta] {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 10px;
+    align-items: baseline;
+  }
+
+  table.historia td[data-etykieta]::before {
+    content: attr(data-etykieta);
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+
+  .historia__prawa { text-align: left !important; }
+
+  /* Działania na dole kafelka, oddzielone kreską od danych. */
+  table.historia td:last-child {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

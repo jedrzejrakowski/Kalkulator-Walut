@@ -31,6 +31,23 @@ export function formatRate(rate: number): string {
 }
 
 /**
+ * Kurs NBP z pełną dokładnością, jaką podaje tabela.
+ *
+ * Przy sześciu miejscach po przecinku kurs dongu wyświetlał się jako 0,000143,
+ * a wyliczenie szło na dokładniejszej liczbie z API — przez co pomnożenie kwoty
+ * przez kurs widoczny na ekranie nie odtwarzało wyniku. Na dowodzie księgowym
+ * rachunek musi zgadzać się co do grosza.
+ */
+const kursowy = new Intl.NumberFormat('pl-PL', {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 10,
+});
+
+export function formatKurs(kurs: number): string {
+  return kursowy.format(kurs);
+}
+
+/**
  * Parsuje kwotę wpisaną ręcznie, w zapisie polskim i angielskim.
  *
  * Przecinek jest separatorem dziesiętnym, a kropka i spacja separatorami

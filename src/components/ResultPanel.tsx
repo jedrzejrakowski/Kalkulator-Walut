@@ -1,19 +1,6 @@
 import { poPolsku } from '../domain/dates';
-import { formatAmount, formatPln } from '../domain/money';
+import { formatAmount, formatKurs, formatPln } from '../domain/money';
 import type { Przeliczenie } from '../domain/types';
-
-/**
- * Kurs pokazujemy z pełną dokładnością, jaką podaje NBP.
- *
- * Przy sześciu miejscach po przecinku kurs dongu wyświetlał się jako
- * 0,000143, a wyliczenie szło na dokładniejszej liczbie z API — przez co
- * pomnożenie kwoty przez kurs widoczny na ekranie nie odtwarzało wyniku.
- * Na dowodzie księgowym rachunek musi się zgadzać co do grosza.
- */
-const formatKursu = new Intl.NumberFormat('pl-PL', {
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 10,
-});
 
 /**
  * Kurs krzyżowy podajemy w cyfrach znaczących, nie w miejscach po przecinku.
@@ -52,7 +39,7 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
               <span className={`pill pill--${kurs.tabela.toLowerCase()}`}>{kurs.numerTabeli}</span>
               <span className="row-note">tabela z {poPolsku(kurs.dataTabeli)}</span>
             </th>
-            <td>{formatKursu.format(kurs.kurs)} zł</td>
+            <td>{formatKurs(kurs.kurs)} zł</td>
           </tr>
 
           {przezZlotego ? (
@@ -72,7 +59,7 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
                   </span>
                   <span className="row-note">tabela z {poPolsku(kursDocelowy.dataTabeli)}</span>
                 </th>
-                <td>{formatKursu.format(kursDocelowy.kurs)} zł</td>
+                <td>{formatKurs(kursDocelowy.kurs)} zł</td>
               </tr>
               <tr>
                 <th scope="row">
@@ -122,13 +109,13 @@ export function ResultPanel({ wynik }: { wynik: Przeliczenie }) {
           {formatAmount(wynik.kwota)} {kurs.kod}.
         </li>
         <li>
-          Na dowodzie opisz kurs: {formatKursu.format(kurs.kurs)} zł za 1 {kurs.kod}, tabela{' '}
+          Na dowodzie opisz kurs: {formatKurs(kurs.kurs)} zł za 1 {kurs.kod}, tabela{' '}
           {kurs.numerTabeli} z {poPolsku(kurs.dataTabeli)}.
         </li>
         {przezZlotego ? (
           <li>
             Przeliczenie na {kursDocelowy.kod} prowadzi przez złotego: {formatPln(wynik.wynikPln)}{' '}
-            podzielone przez {formatKursu.format(kursDocelowy.kurs)} zł daje{' '}
+            podzielone przez {formatKurs(kursDocelowy.kurs)} zł daje{' '}
             <strong>
               {formatAmount(wynik.wynikDocelowy!)} {kursDocelowy.kod}
             </strong>

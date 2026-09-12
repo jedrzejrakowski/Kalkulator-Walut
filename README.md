@@ -113,6 +113,33 @@ Mieszanie `toISOString()` z `getDate()` powoduje, że latem między północą a
 data cofa się o dobę — testy w `src/domain/__tests__/dates.test.ts` pilnują, żeby to nie
 wróciło.
 
+## Historia przeliczeń
+
+Pasek przy lewej krawędzi przełącza dwa ekrany: przeliczanie i historię. Ikona
+historii niesie licznik zapisanych pozycji, żeby od razu było widać, czy jest
+po co tam zaglądać. Na wąskim ekranie pasek wraca do biegu strony jako rząd nad
+kartami — przyklejony zabierałby telefonowi połowę i tak skąpej szerokości.
+
+Każde udane przeliczenie zapisuje się samo. Historia przydaje się tylko wtedy,
+gdy jest kompletna, a osobny przycisk „zapisz" łatwo pominąć. Powtórzone
+przeliczenie tego samego zdarzenia nie dubluje wiersza, a pojedyncze wpisy
+i całość da się usunąć.
+
+Wiersz niesie komplet danych z dowodu: datę zdarzenia, kwotę, kurs, numer tabeli
+NBP i jej datę oraz wynik. Po tygodniu sama kwota i wynik niczego nie tłumaczą.
+„Kopiuj opis" wstawia do schowka jedną linię gotową do wklejenia w opis dowodu —
+jedną, bo pola opisu w programach księgowych bywają jednowierszowe.
+
+Na telefonie wiersz nie mieści się nawet w połowie, więc poniżej 760 px tabela
+rozkłada się na kafelki: te same dane, jedno pod drugim.
+
+**Gdzie to siedzi.** W `localStorage` tej przeglądarki, na tym komputerze —
+nigdzie nie jest wysyłane i zniknie razem z danymi witryny. To notatnik
+pomocniczy, a nie dokumentacja księgowa; dowodem pozostaje to, co w księgach.
+Zawartość pamięci przeglądarki traktujemy jak dane spoza aplikacji: każdy wpis
+jest sprawdzany przy odczycie, a uszkodzony odrzucany, żeby nie wywrócił ekranu.
+Trzymamy najwyżej 200 ostatnich pozycji.
+
 ## Ustawienia wyglądu
 
 Zębatka w prawym górnym rogu otwiera panel: motyw jasny, ciemny albo za systemem,
@@ -160,6 +187,7 @@ src/domain/     logika niezależna od interfejsu
   nbp.ts        klient API: lista walut oraz kurs z przejściem A → B
   convert.ts    złożenie wyniku i zaokrąglenie do groszy
   szukaj.ts     dopasowanie waluty do frazy, wspólne dla obu pól
+  historia.ts   zapis przeliczeń w pamięci przeglądarki i opis do schowka
   wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
 src/components/ interfejs
 ```
