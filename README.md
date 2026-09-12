@@ -34,14 +34,21 @@ bywa starsza, bo ogłaszana jest raz w tygodniu. Wynik pokazuje obie tabele osob
 
 ## Wybór waluty
 
-NBP ogłasza ponad sto czterdzieści walut, więc zwykła lista rozwijana przestała
-wystarczać w obu polach. Waluta źródłowa ma listę rozwiniętą na stałe, z podziałem
-na tabele; waluta docelowa — to samo szukanie zwinięte do jednego pola, bo złoty
-jako cel wystarcza w większości przeliczeń, a rozwinięta lista rozciągnęłaby
-formularz na dwa ekrany.
+NBP ogłasza ponad sto czterdzieści walut, więc zwykła lista rozwijana przeglądarki
+nie wystarcza — trzeba szukać po kodzie albo nazwie. Oba pola działają tak samo:
+pokazują bieżący wybór, a klik otwiera panel z wyszukiwarką, który wypływa nad
+formularzem. Dwie listy rozwinięte na stałe zajmowałyby ponad pół ekranu na wybór,
+który po ustawieniu rzadko się zmienia.
 
-Szukanie jest wspólne dla obu pól — `src/domain/szukaj.ts` — i pomija znaki
-diakrytyczne w obie strony: „filipinskie” trafia tak samo jak „filipińskie”.
+Nad wyszukiwarką waluty źródłowej stoi podział na tabele, bo zawęża inaczej niż
+ona — po rytmie ogłaszania, a nie po nazwie. Dla księgowego to rozróżnienie
+istotne: kurs z tabeli B bywa starszy od wymaganego dnia, bo NBP ogłasza ją
+w środy. Po wyborze pole mówi wprost, z której tabeli pochodzi kurs.
+
+Wspólny jest cały mechanizm pola — `src/components/PoleWaluty.tsx` — bo oba
+różnią się tylko zawartością listy i tym, co stoi nad wyszukiwarką. Samo szukanie
+siedzi w `src/domain/szukaj.ts` i pomija znaki diakrytyczne w obie strony:
+„filipinskie” trafia tak samo jak „filipińskie”.
 Nikt nie sięga po ogonki, szukając waluty w pośpiechu.
 
 Waluta źródłowa nie pojawia się na liście celów, a wybranie jej po lewej stronie

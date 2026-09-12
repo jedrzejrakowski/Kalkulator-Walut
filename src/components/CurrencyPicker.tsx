@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { filtruj } from '../domain/szukaj';
+import { PoleWaluty } from './PoleWaluty';
 import type { Tabela, Waluta } from '../domain/types';
 
 type Filtr = Tabela | 'wszystkie';
@@ -10,6 +10,12 @@ const OPIS: Record<Filtr, string> = {
   B: 'Tabela B — pozostałe waluty, ogłaszana raz w tygodniu, w środy',
 };
 
+/** Rytm ogłaszania tabeli — to on decyduje, czy kurs będzie z wymaganego dnia. */
+const RYTM: Record<Tabela, string> = {
+  A: 'tabeli A, ogłaszanej w każdy dzień roboczy',
+  B: 'tabeli B, ogłaszanej raz w tygodniu, w środy',
+};
+
 interface Props {
   waluty: Waluta[];
   wybrany: string;
@@ -17,15 +23,14 @@ interface Props {
 }
 
 /**
- * Wybór waluty z podziałem na tabele i wyszukiwarką.
+ * Wybór waluty źródłowej: filtr tabel i wyszukiwarka w rozwijanym panelu.
  *
- * Przy czterech walutach wystarczała zwykła lista rozwijana. NBP ogłasza ich
- * ponad sto czterdzieści, więc potrzebne jest zawężanie: najpierw tabela,
- * potem szukanie po kodzie albo nazwie.
+ * Podział na tabele stoi nad wyszukiwarką, bo zawęża inaczej niż ona — po
+ * rytmie ogłaszania, a nie po nazwie. Dla księgowego to rozróżnienie istotne:
+ * kurs z tabeli B bywa starszy od wymaganego dnia, bo NBP ogłasza ją w środy.
  */
 export function CurrencyPicker({ waluty, wybrany, onWybor }: Props) {
   const [filtr, setFiltr] = useState<Filtr>('wszystkie');
-  const [szukaj, setSzukaj] = useState('');
 
   const liczby = useMemo(
     () => ({
@@ -36,75 +41,49 @@ export function CurrencyPicker({ waluty, wybrany, onWybor }: Props) {
     [waluty],
   );
 
-  const widoczne = useMemo(
-    () => filtruj(filtr === 'wszystkie' ? waluty : waluty.filter((w) => w.tabela === filtr), szukaj),
-    [waluty, filtr, szukaj],
+  const pozycje = useMemo(
+    () => (filtr === 'wszystkie' ? waluty : waluty.filter((w) => w.tabela === filtr)),
+    [waluty, filtr],
   );
 
   const opis = waluty.find((w) => w.kod === wybrany);
 
   return (
-    <div className="field">
-      <span className="field-label">Waluta</span>
-
-      <div className="segmented" role="group" aria-label="Tabela kursów">
-        {(['wszystkie', 'A', 'B'] as Filtr[]).map((wartosc) => (
-          <button
-            key={wartosc}
-            type="button"
-            aria-pressed={filtr === wartosc}
-            title={OPIS[wartosc]}
-            onClick={() => setFiltr(wartosc)}
-          >
-            {wartosc === 'wszystkie' ? 'Wszystkie' : `Tabela ${wartosc}`}
-            <span className="segmented__count">{liczby[wartosc]}</span>
-          </button>
-        ))}
-      </div>
-
-      <p className="field-hint" style={{ marginTop: 8 }}>
-        {OPIS[filtr]}
-      </p>
-
-      <input
-        type="search"
-        className="picker__search"
-        value={szukaj}
-        placeholder="Szukaj po kodzie albo nazwie, na przykład dong"
-        aria-label="Szukaj waluty"
-        onChange={(e) => setSzukaj(e.target.value)}
-      />
-
-      <ul className="picker__list">
-        {widoczne.length === 0 ? (
-          <li className="picker__empty">Brak walut pasujących do „{szukaj}”.</li>
-        ) : (
-          widoczne.map((w) => (
-            <li key={`${w.tabela}-${w.kod}`}>
+    <PoleWaluty
+      etykieta="Waluta"
+      pozycje={pozycje}
+      wybrany={wybrany}
+      onWybor={onWybor}
+      etykietaSzukania="Szukaj waluty"
+      pusto={filtr === 'wszystkie' ? 'Lista walut jest pusta.' : `Tabela ${filtr} nie zawiera żadnej waluty.`}
+      naglowek={
+        <>
+          <div className="segmented" role="group" aria-label="Tabela kursów">
+            {(['wszystkie', 'A', 'B'] as Filtr[]).map((wartosc) => (
               <button
+                key={wartosc}
                 type="button"
-                className={`picker__item${w.kod === wybrany ? ' picker__item--on' : ''}`}
-                aria-pressed={w.kod === wybrany}
-                onClick={() => onWybor(w.kod)}
+                aria-pressed={filtr === wartosc}
+                title={OPIS[wartosc]}
+                onClick={() => setFiltr(wartosc)}
               >
-                <span className="picker__code">{w.kod}</span>
-                <span className="picker__name">{w.nazwa}</span>
-                <span className={`pill pill--${w.tabela.toLowerCase()}`}>{w.tabela}</span>
+                {wartosc === 'wszystkie' ? 'Wszystkie' : `Tabela ${wartosc}`}
+                <span className="segmented__count">{liczby[wartosc]}</span>
               </button>
-            </li>
-          ))
-        )}
-      </ul>
-
-      <p className="field-hint">
-        {opis ? (
+            ))}
+          </div>
+          <p className="field-hint">{OPIS[filtr]}</p>
+        </>
+      }
+      hint={
+        opis ? (
           <>
-            Wybrano <strong>{opis.kod}</strong> — {opis.nazwa}, tabela {opis.tabela}.
+            Kurs {opis.kod} pochodzi z {RYTM[opis.tabela]}.
           </>
         ) : (
-          'Wskaż walutę z listy powyżej.'
-        )}
-      </p>
-    </div>
+          'Wskaż walutę, w której wyrażona jest kwota.'
+        )
+      }
+    />
   );
 }

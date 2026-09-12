@@ -752,8 +752,6 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
   color: var(--accent-ink);
 }
 
-.picker__search { margin-top: 10px; }
-
 .picker__list {
   list-style: none;
   margin: 10px 0 8px;
@@ -847,6 +845,22 @@ button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset:
 }
 
 .combo__pole[aria-expanded='true'] .combo__strzalka { transform: rotate(180deg); }
+
+/* Filtr tabel nad wyszukiwarką: zawęża po rytmie ogłaszania, nie po nazwie. */
+.combo__naglowek {
+  margin-bottom: 12px;
+}
+
+.combo__naglowek .field-hint {
+  margin-top: 6px;
+}
+
+/* Bez wyboru nie ma kodu ani plakietki — napis zajmuje całą szerokość pola. */
+.combo__brak {
+  grid-column: 1 / 4;
+  font-weight: 400;
+  color: var(--text-muted);
+}
 
 /* Lista wypływa nad formularz, żeby otwarcie jej nie rozpychało karty. */
 .combo__panel {
