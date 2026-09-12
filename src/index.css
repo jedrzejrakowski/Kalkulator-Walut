@@ -223,10 +223,19 @@ h3 {
     grid-template-areas: 'formularz wynik wykres';
   }
 
-  /* Karta wyniku rozciąga się do wysokości formularza, a jej treść jest
-     krótsza. Wolne miejsce rozkładamy między sekcje, zamiast zbierać je
-     w jedną dziurę nad podstawą prawną. */
+  /*
+   * Karty w rzędzie kończą się na tej samej wysokości, a treść mają różnej
+   * długości — nadmiar rozkładamy więc między sekcje, zamiast zbierać go
+   * w jedną dziurę przy dolnej krawędzi. Rozstrzelona karta czyta się jak
+   * zamierzona, dziura nad przyciskiem nie.
+   *
+   * Tylko przy trzech kolumnach: przy dwóch formularz sięga wysokości wyniku
+   * i wykresu razem, więc ten sam zabieg rozrzuciłby pola po pół ekranu.
+   */
+  .layout > div.kol-formularz > .card,
   .layout > div.kol-wynik > .card { justify-content: space-between; }
+
+  .layout > div.kol-formularz > .card > button.primary,
   .layout > div.kol-wynik > .card > details.legal-box { margin-top: 0; }
 }
 

@@ -80,9 +80,14 @@ Trzecia kolumna zajmuje to miejsce, zamiast zabierać je formularzowi.
 Rozmieszczenie opisane jest nazwanymi obszarami siatki, więc kolejność w kodzie
 zostaje ta sama we wszystkich trzech układach — zmienia się tylko mapa obszarów.
 
-Karty w jednym rzędzie kończą się na tej samej wysokości. Wolne miejsce nie
-zbiera się w jedną dziurę: wykres wypełnia je rysunkiem, karta wyniku rozkłada
-je między sekcje, a karta bez treści układa komunikat na środku.
+Karty w jednym rzędzie kończą się na tej samej wysokości, a treść mają różnej
+długości. Wolne miejsce nie zbiera się w jedną dziurę: wykres wypełnia je
+rysunkiem, formularz i karta wyniku rozkładają je między swoje sekcje, a karta
+bez treści układa komunikat na środku.
+
+Rozkładanie działa tylko przy trzech kolumnach. Przy dwóch formularz sięga
+wysokości wyniku i wykresu razem, więc ten sam zabieg rozrzuciłby pola po pół
+ekranu — tam przycisk zostaje przy dolnej krawędzi.
 
 ## Wykres historyczny
 
