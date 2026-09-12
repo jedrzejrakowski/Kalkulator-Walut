@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  najblizszy, osPionowa, podpisyOsi, pionowo, poziomo, ramka, sciezka, wypelnienie,
+  ileKresek, najblizszy, osPionowa, podpisyOsi, pionowo, poziomo, ramka, sciezka, wypelnienie,
   type Punkt, type Ramka,
 } from '../wykres';
 
@@ -147,11 +147,49 @@ describe('ramka zależna od szerokości', () => {
     expect(ramka(Number.NaN).szerokosc).toBe(620);
   });
 
+  it('przyjmuje wysokość pola, gdy układ rozciągnie kartę', () => {
+    expect(ramka(500, 420).wysokosc).toBe(420);
+    expect(ramka(500, 190).wysokosc).toBe(190);
+  });
+
+  it('bez podanej wysokości wylicza ją z szerokości', () => {
+    expect(ramka(500).wysokosc).toBe(250);
+    expect(ramka(360).wysokosc).toBe(190);
+    expect(ramka(500, 0).wysokosc).toBe(250);
+  });
+
+  it('trzyma wysokość w rozsądnych granicach', () => {
+    expect(ramka(500, 40).wysokosc).toBe(160);
+    expect(ramka(500, 3000).wysokosc).toBe(560);
+  });
+
   it('zawsze zostawia pole rysowania o dodatnich wymiarach', () => {
     for (const szerokosc of [0, 200, 320, 480, 900, 1600]) {
       const r = ramka(szerokosc);
       expect(r.szerokosc - r.lewo - r.prawo).toBeGreaterThan(0);
       expect(r.wysokosc - r.gora - r.dol).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('gęstość kresek osi', () => {
+  it('rośnie razem z wysokością pola', () => {
+    expect(ileKresek(ramka(360))).toBeLessThan(ileKresek(ramka(620)));
+    expect(ileKresek(ramka(620))).toBeLessThan(ileKresek(ramka(620, 450)));
+  });
+
+  it('trzyma się granic czytelności', () => {
+    expect(ileKresek(ramka(260, 160))).toBeGreaterThanOrEqual(3);
+    expect(ileKresek(ramka(720, 560))).toBeLessThanOrEqual(8);
+  });
+
+  it('w wysokim polu skala obejmuje dane ciaśniej', () => {
+    // Ten sam szereg w niskim i wysokim polu: gęstsze kreski to węższy zakres,
+    // a więc mniej pustego miejsca pod linią.
+    const punkty = seria([4.2499, 4.362, 4.28, 4.31]);
+    const niski = osPionowa(punkty, ileKresek(ramka(620)));
+    const wysoki = osPionowa(punkty, ileKresek(ramka(620, 450)));
+    const rozpietosc = (z: { zakres: { min: number; max: number } }) => z.zakres.max - z.zakres.min;
+    expect(rozpietosc(wysoki)).toBeLessThan(rozpietosc(niski));
   });
 });

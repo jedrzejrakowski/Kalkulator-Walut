@@ -56,6 +56,27 @@ a przy okazji poprawna obsługa świąt oraz tygodniowego rytmu tabeli B.
 Gdy kurs pochodzi z dnia wcześniejszego niż wymagany, aplikacja mówi o tym wprost i wyjaśnia
 dlaczego — święto albo tygodniowa tabela B.
 
+## Układ
+
+Trzy bloki obok siebie: formularz, wynik, wykres. Przy dwóch kolumnach wykres
+lądował pod wynikiem i strona rosła na dwa ekrany — trzeba było przewijać, żeby
+go w ogóle zobaczyć. Na monitorze Full HD zostawało przy tym ponad siedemset
+pikseli pustego marginesu po bokach, bo strona trzymała się szerokości 1160 px.
+Trzecia kolumna zajmuje to miejsce, zamiast zabierać je formularzowi.
+
+| Szerokość okna | Układ |
+| --- | --- |
+| od 1440 px | trzy kolumny obok siebie, strona do 1640 px |
+| 940–1439 px | formularz po lewej, wynik nad wykresem po prawej |
+| poniżej 940 px | jedna kolumna, kolejno formularz, wynik, wykres |
+
+Rozmieszczenie opisane jest nazwanymi obszarami siatki, więc kolejność w kodzie
+zostaje ta sama we wszystkich trzech układach — zmienia się tylko mapa obszarów.
+
+Karty w jednym rzędzie kończą się na tej samej wysokości. Wolne miejsce nie
+zbiera się w jedną dziurę: wykres wypełnia je rysunkiem, karta wyniku rozkłada
+je między sekcje, a karta bez treści układa komunikat na środku.
+
 ## Wykres historyczny
 
 Pod wynikiem rysuje się przebieg kursu z ostatnich 30, 90 albo 365 dni — z tych samych
@@ -71,6 +92,10 @@ i ścieżki — więc testy sprawdzają, że każda podpisana kreska mieści si�
 a punkty nie wychodzą poza pole rysowania. Wykres rysowany jest w jednostkach równych
 pikselom kontenera: gdyby ramka miała stałą szerokość, na telefonie przeglądarka
 przeskalowałaby rysunek razem z podpisami osi i daty stałyby się nieczytelne.
+
+Wysokość rysunku wynika z wysokości karty, a gęstość kresek osi z wysokości
+rysunku. W wysokiej kolumnie skala obejmuje dane ciaśniej — inaczej ten sam
+zaokrąglony zakres zostawiałby pod linią połowę pustego pola.
 
 Zakres ograniczony jest do roku, bo API NBP nie przyjmuje dłuższych okresów.
 

@@ -157,13 +157,20 @@ h3 {
   display: grid;
   gap: 20px;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'formularz' 'wynik' 'wykres';
   align-items: start;
 }
+
+.kol-formularz { grid-area: formularz; }
+.kol-wynik { grid-area: wynik; }
+.kol-wykres { grid-area: wykres; }
 
 /* Formularz obok wyniku — pionowo wszystko zajmowało prawie dwa ekrany. */
 @media (min-width: 940px) {
   .layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    /* Formularz przez obie wysokości, wynik nad wykresem. */
+    grid-template-areas: 'formularz wynik' 'formularz wykres';
     align-items: stretch;
   }
 
@@ -187,6 +194,40 @@ h3 {
 
   /* Zwijana podstawa prawna zamyka kartę wyniku od dołu. */
   .layout > div > .card > details.legal-box { margin-top: auto; }
+
+  /* Karta bez treści rozciąga się razem z sąsiadkami — komunikat trafia wtedy
+     na środek, zamiast przyklejać się do krawędzi. */
+  .layout > div > .card > .placeholder { margin-block: auto; }
+
+  /* Wykres zabiera wolne miejsce w rozciągniętej karcie. */
+  .layout .wykres { flex: 1 1 auto; }
+  .layout .wykres__pole { flex: 1 1 0; min-height: var(--wys-wykresu, 250px); }
+}
+
+/*
+ * Trzy kolumny: formularz, wynik, wykres.
+ *
+ * Przy dwóch kolumnach wykres lądował pod wynikiem i strona rosła na dwa
+ * ekrany — trzeba było przewijać, żeby go zobaczyć. Na monitorze Full HD
+ * zostawało przy tym ponad siedemset pikseli pustego marginesu po bokach,
+ * bo strona trzymała się szerokości 1160 px. Trzecia kolumna zajmuje to
+ * miejsce zamiast zabierać je formularzowi.
+ */
+@media (min-width: 1440px) {
+  /* Węższy margines u dołu: przy trzech kolumnach liczy się każdy piksel
+     wysokości, bo o to w tym układzie chodzi. */
+  .page { max-width: 1640px; padding-block: 24px 28px; }
+
+  .layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: 'formularz wynik wykres';
+  }
+
+  /* Karta wyniku rozciąga się do wysokości formularza, a jej treść jest
+     krótsza. Wolne miejsce rozkładamy między sekcje, zamiast zbierać je
+     w jedną dziurę nad podstawą prawną. */
+  .layout > div.kol-wynik > .card { justify-content: space-between; }
+  .layout > div.kol-wynik > .card > details.legal-box { margin-top: 0; }
 }
 
 .card {
@@ -1032,10 +1073,23 @@ button.primary--waski { width: auto; padding: 9px 20px; }
 
 /* --- wykres kursu --- */
 
-.wykres svg {
+.wykres {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Pole rysowania. Jego wysokość ustala układ, nie rysunek — dzięki temu
+   wykres wypełnia kartę rozciągniętą do wysokości sąsiedniej kolumny. */
+.wykres__pole {
+  height: var(--wys-wykresu, 250px);
+  min-height: 0;
+}
+
+.wykres__pole svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   overflow: visible;
   cursor: crosshair;
 }

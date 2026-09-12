@@ -100,7 +100,7 @@ export default function App() {
         />
 
         <div className="layout">
-          <div>
+          <div className="kol-formularz">
         <section className="card">
           <h2>Transakcja</h2>
 
@@ -163,29 +163,39 @@ export default function App() {
         </section>
           </div>
 
-          <div className="results">
+          <div className="kol-wynik results">
             {blad ? (
               <section className="card">
                 <p className="error" role="alert">
                   {blad}
                 </p>
               </section>
-            ) : null}
-
-            {wynik ? (
-              <>
-                <ResultPanel wynik={wynik} />
-                <KartaWykresu
-                  kod={wynik.kurs.kod}
-                  doDnia={wynik.dataWymagana}
-                  dataKsiegowania={wynik.kurs.dataTabeli}
-                />
-              </>
-            ) : blad ? null : (
+            ) : wynik ? (
+              <ResultPanel wynik={wynik} />
+            ) : (
               <section className="card">
                 <h2>Wynik przeliczenia</h2>
                 <p className="placeholder">
                   Wpisz kwotę, wskaż walutę i datę, a następnie kliknij „Przelicz na złote”.
+                </p>
+              </section>
+            )}
+          </div>
+
+          {/* Wykres w osobnej kolumnie, a nie pod wynikiem: inaczej strona rośnie
+              na dwa ekrany i trzeba przewijać, żeby go w ogóle zobaczyć. */}
+          <div className="kol-wykres">
+            {wynik ? (
+              <KartaWykresu
+                kod={wynik.kurs.kod}
+                doDnia={wynik.dataWymagana}
+                dataKsiegowania={wynik.kurs.dataTabeli}
+              />
+            ) : (
+              <section className="card">
+                <h2>Kurs w czasie</h2>
+                <p className="placeholder">
+                  Po przeliczeniu pojawi się tu przebieg kursu z ostatnich miesięcy.
                 </p>
               </section>
             )}

@@ -2,28 +2,38 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { poPolsku } from '../domain/dates';
 import type { Seria } from '../domain/nbp';
 import {
-  najblizszy, osPionowa, podpisyOsi, pionowo, poziomo, ramka, sciezka, wypelnienie,
+  ileKresek, najblizszy, osPionowa, podpisyOsi, pionowo, poziomo, ramka, sciezka, wypelnienie,
 } from '../domain/wykres';
 
 /**
- * Szerokość kontenera w pikselach. Bez niej rysowalibyśmy w stałej ramce,
+ * Wymiary pola rysowania w pikselach. Bez nich rysowalibyśmy w stałej ramce,
  * a przeglądarka przeskalowałaby wykres razem z podpisami osi.
+ *
+ * Wysokość pola wynika z układu, nie z rysunku: w kolumnie karta rozciąga się
+ * do wysokości sąsiadek, a wykres ma tę wysokość wypełnić. Rysunek nie wpływa
+ * na wymiar pola, więc pomiar nie zapętla się z rysowaniem.
  */
-function useSzerokosc(): [React.RefObject<HTMLDivElement | null>, number] {
+function useRozmiar(): [React.RefObject<HTMLDivElement | null>, { szerokosc: number; wysokosc: number }] {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [szerokosc, setSzerokosc] = useState(620);
+  const [rozmiar, setRozmiar] = useState({ szerokosc: 620, wysokosc: 0 });
 
   useEffect(() => {
     const element = ref.current;
     if (!element || typeof ResizeObserver === 'undefined') return;
     const obserwator = new ResizeObserver(([wpis]) => {
-      if (wpis) setSzerokosc(wpis.contentRect.width);
+      if (!wpis) return;
+      const { width, height } = wpis.contentRect;
+      setRozmiar((poprzedni) =>
+        Math.abs(poprzedni.szerokosc - width) < 1 && Math.abs(poprzedni.wysokosc - height) < 1
+          ? poprzedni
+          : { szerokosc: width, wysokosc: height },
+      );
     });
     obserwator.observe(element);
     return () => obserwator.disconnect();
   }, []);
 
-  return [ref, szerokosc];
+  return [ref, rozmiar];
 }
 
 const formatKursu = new Intl.NumberFormat('pl-PL', {
@@ -42,13 +52,15 @@ interface Props {
 
 export function Wykres({ seria, dataKsiegowania }: Props) {
   const [wskazany, setWskazany] = useState<number | null>(null);
-  const [ref, szerokosc] = useSzerokosc();
+  const [ref, rozmiar] = useRozmiar();
   const idWypelnienia = useId();
   const { punkty } = seria;
 
-  const RAMKA = ramka(szerokosc);
+  const RAMKA = ramka(rozmiar.szerokosc, rozmiar.wysokosc);
+  // Wysokość wyjściowa pola: tyle zajmie wykres, dopóki układ go nie rozciągnie.
+  const wysokoscWyjsciowa = ramka(rozmiar.szerokosc).wysokosc;
 
-  const { kreski, zakres } = osPionowa(punkty);
+  const { kreski, zakres } = osPionowa(punkty, ileKresek(RAMKA));
   const indeksKsiegowania = dataKsiegowania
     ? punkty.findIndex((p) => p.data === dataKsiegowania)
     : -1;
@@ -60,7 +72,12 @@ export function Wykres({ seria, dataKsiegowania }: Props) {
   const y = (v: number) => pionowo(v, zakres, RAMKA);
 
   return (
-    <div className="wykres" ref={ref}>
+    <div className="wykres">
+      <div
+        className="wykres__pole"
+        ref={ref}
+        style={{ '--wys-wykresu': `${wysokoscWyjsciowa}px` } as React.CSSProperties}
+      >
       <svg
         viewBox={`0 0 ${RAMKA.szerokosc} ${RAMKA.wysokosc}`}
         role="img"
@@ -133,6 +150,7 @@ export function Wykres({ seria, dataKsiegowania }: Props) {
           </g>
         ) : null}
       </svg>
+      </div>
 
       {punktAktywny ? (
         <p className="wykres__odczyt">

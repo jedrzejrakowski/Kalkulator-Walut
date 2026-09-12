@@ -104,25 +104,44 @@ export function podpisyOsi(ile: number, maks = 5): number[] {
 }
 
 /**
- * Ramka dobrana do dostępnej szerokości.
+ * Ramka dobrana do wymiarów pola rysowania.
  *
  * Wykres rysujemy w jednostkach SVG, a przeglądarka skaluje go do kontenera —
- * razem z podpisami osi. Gdyby ramka miała stałą szerokość, na telefonie cały
- * rysunek zjeżdżałby do połowy rozmiaru i daty stawały się nieczytelne.
+ * razem z podpisami osi. Gdyby ramka miała stały rozmiar, na telefonie cały
+ * rysunek zjeżdżałby do połowy skali i daty stawałyby się nieczytelne.
  * Dlatego ramka ma tyle jednostek, ile pikseli daje kontener: skala zostaje
- * bliska jedności, a podpisy zachowują swój rozmiar.
+ * równa jedności, a podpisy zachowują swój rozmiar.
+ *
+ * Wysokość podana osobno pozwala wykresowi wypełnić kartę, gdy ta rozciąga się
+ * do wysokości sąsiednich kolumn. Pominięta — wynika z szerokości.
  */
-export function ramka(dostepna: number): Ramka {
+export function ramka(dostepna: number, wysokoscPola?: number): Ramka {
   const szerokosc = Math.min(720, Math.max(260, Math.round(dostepna) || 620));
   const waski = szerokosc < 420;
+  // Niższy wykres na wąskim ekranie, żeby karta nie rosła w nieskończoność.
+  const domyslna = waski ? 190 : 250;
+  const wysokosc = Math.min(560, Math.max(160, Math.round(wysokoscPola || 0) || domyslna));
+
   return {
     szerokosc,
-    // Niższy wykres na wąskim ekranie, żeby karta nie rosła w nieskończoność.
-    wysokosc: waski ? 190 : 250,
+    wysokosc,
     gora: 14,
     prawo: 14,
     // Miejsce na podpisy osi pionowej — kursy bywają czterocyfrowe po przecinku.
     dol: 30,
     lewo: waski ? 52 : 62,
   };
+}
+
+/**
+ * Ile kresek opisać na osi pionowej przy tej wysokości pola.
+ *
+ * Liczba kresek decyduje o gęstości skali, a ta o tym, ile pustego miejsca
+ * zostaje pod linią: im rzadsze kreski, tym szerszy zaokrąglony zakres.
+ * W niskim wykresie cztery kreski wystarczają, w wysokim ten sam zakres
+ * zostawiłby połowę pola pustą.
+ */
+export function ileKresek(r: Ramka): number {
+  const pole = r.wysokosc - r.gora - r.dol;
+  return Math.min(8, Math.max(3, Math.round(pole / 55)));
 }
