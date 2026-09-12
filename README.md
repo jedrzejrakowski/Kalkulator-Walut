@@ -73,9 +73,18 @@ Trzecia kolumna zajmuje to miejsce, zamiast zabierać je formularzowi.
 
 | Szerokość okna | Układ |
 | --- | --- |
-| od 1440 px | trzy kolumny obok siebie, strona do 1640 px |
-| 940–1439 px | formularz po lewej, wynik nad wykresem po prawej |
+| od 1200 px | trzy kolumny obok siebie, strona do 1640 px |
+| 940–1199 px | formularz po lewej, wynik nad wykresem po prawej |
 | poniżej 940 px | jedna kolumna, kolejno formularz, wynik, wykres |
+
+Granica trzech kolumn stoi na 1200 px, a nie wyżej, bo laptop 15,6" rzadko
+daje więcej: 1366×768 albo 1920×1080 przy skalowaniu Windows 125–150% to
+1280–1536 px logicznych. Przy dwóch kolumnach strona rosła tam do 1405 px
+i wracał problem, dla którego trzecia kolumna w ogóle powstała.
+
+Osobno liczy się wysokość okna. Poniżej 860 px nagłówek układa się w rzędzie —
+logo obok tytułu zamiast nad nim — bo wyśrodkowany zajmuje 199 px, czyli jedną
+trzecią ekranu laptopa. Na monitorze stacjonarnym próg się nie włącza.
 
 Rozmieszczenie opisane jest nazwanymi obszarami siatki, więc kolejność w kodzie
 zostaje ta sama we wszystkich trzech układach — zmienia się tylko mapa obszarów.
