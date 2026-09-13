@@ -4,7 +4,8 @@ import { Logo } from './components/Logo';
 import { EkranHistorii } from './components/EkranHistorii';
 import { PanelUstawien } from './components/PanelUstawien';
 import { PasekNawigacji, type Ekran } from './components/PasekNawigacji';
-import { DateField, NumberField } from './components/fields';
+import { NumberField } from './components/fields';
+import { PoleDaty } from './components/PoleDaty';
 import { KartaWykresu } from './components/KartaWykresu';
 import { ResultPanel } from './components/ResultPanel';
 import { WalutaDocelowa } from './components/WalutaDocelowa';
@@ -179,7 +180,7 @@ export default function App() {
             }
           />
 
-          <DateField
+          <PoleDaty
             label="Data zdarzenia gospodarczego"
             value={data}
             max={dzisiaj()}

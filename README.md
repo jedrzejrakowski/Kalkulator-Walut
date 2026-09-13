@@ -54,6 +54,25 @@ Nikt nie sięga po ogonki, szukając waluty w pośpiechu.
 Waluta źródłowa nie pojawia się na liście celów, a wybranie jej po lewej stronie
 cofa cel do złotego — przeliczenie waluty na samą siebie nie miałoby sensu.
 
+## Kalendarz daty zdarzenia
+
+Rozwijany kalendarzyk jest własny, bo natywny nie wie nic o regule z art. 11a
+ust. 2: że sobota cofa kurs do piątku. Siatka niesie to wprost — dni wolne
+innym kolorem, przerywany pierścień na dniu, z którego pójdzie kurs, dni
+z przyszłości wygaszone, a pod spodem zdanie tłumaczące wybór.
+
+Pierścień i zdanie idą za dniem **pod kursorem**, nie za wyborem: skutek ma być
+widoczny przed kliknięciem, a nie po nim. To ta sama konwencja co na wykresie,
+gdzie przerywana kreska wskazuje kurs użyty do księgowania.
+
+Wpisywanie daty zostaje natywne — podmieniamy wyłącznie rozwijany kalendarzyk,
+więc datę dalej da się wklepać cyframi, bez sięgania po mysz.
+
+Na urządzeniach dotykowych własnego kalendarza nie ma: systemowy wybierak
+z bębenkami jest tam wyraźnie wygodniejszy od siatki, w którą trzeba celować.
+Decyduje zapytanie `(hover: hover) and (pointer: fine)`, a nie szerokość okna —
+bo chodzi o rodzaj wskaźnika, nie o rozmiar ekranu.
+
 ## Wyszukiwanie kursu
 
 Zamiast odpytywać API dzień po dniu, aplikacja pobiera **zakres szesnastu dni** kończący się
@@ -201,6 +220,7 @@ src/domain/     logika niezależna od interfejsu
   nbp.ts        klient API: lista walut oraz kurs z przejściem A → B
   convert.ts    złożenie wyniku i zaokrąglenie do groszy
   szukaj.ts     dopasowanie waluty do frazy, wspólne dla obu pól
+  kalendarz.ts  siatka miesiąca, dni wolne i dzień kursu
   historia.ts   zapis przeliczeń w pamięci przeglądarki i opis do schowka
   wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
 src/components/ interfejs

@@ -1531,3 +1531,153 @@ table.historia tbody tr:hover { background: var(--surface-alt); }
   .page-header h1 { font-size: 1.375rem; }
   .page-header__sub { margin-top: 0; }
 }
+
+/* --- pole daty z własnym kalendarzem --- */
+
+.pole-daty__wiersz { position: relative; }
+
+/* Natywny wskaźnik chowamy — wpisywanie z klawiatury zostaje, popup bierzemy
+   swój. Na dotyku wiersz nie powstaje, więc systemowy wybierak działa dalej. */
+.pole-daty__wiersz input[type='date']::-webkit-calendar-picker-indicator { display: none; }
+.pole-daty__wiersz input[type='date'] { padding-right: 44px; }
+
+.pole-daty__ikona {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pole-daty__ikona:hover { color: var(--accent); background: var(--accent-soft); }
+
+.pole-daty__ikona:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.kalendarz {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: 288px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.16);
+}
+
+.kalendarz__belka {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.kalendarz__miesiac {
+  flex: 1;
+  text-align: center;
+  font-size: 0.8438rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.kalendarz__strzalka {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kalendarz__strzalka:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+.kalendarz__strzalka:disabled { opacity: 0.35; cursor: default; }
+
+.kalendarz__siatka {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.kalendarz__naglowek {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.kalendarz__dzien {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kalendarz__dzien:hover { background: var(--accent-soft); }
+.kalendarz__dzien:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Dzień wolny — NBP nie ogłasza wtedy tabeli, więc kurs cofnie się wstecz. */
+.kalendarz__dzien--wolny { color: var(--nkup); }
+.kalendarz__dzien--obcy { opacity: 0.45; }
+
+/* Dzień, z którego pójdzie kurs. Pierścień, nie wypełnienie: to nie jest wybór
+   użytkownika, tylko jego skutek — ta sama konwencja co na wykresie. */
+.kalendarz__dzien--kurs { border-color: var(--accent); border-style: dashed; }
+
+.kalendarz__dzien--wybrany {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  border-style: solid;
+  font-weight: 600;
+}
+
+.kalendarz__dzien--wybrany:hover { background: var(--accent); }
+
+.kalendarz__dzien:disabled {
+  color: var(--text-muted);
+  opacity: 0.3;
+  cursor: default;
+}
+
+.kalendarz__dzien:disabled:hover { background: none; }
+
+.kalendarz__stopka {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.kalendarz__stopka strong { color: var(--text); font-weight: 600; }

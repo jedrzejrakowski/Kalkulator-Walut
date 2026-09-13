@@ -44,20 +44,3 @@ export function NumberField({ label, value, onChange, suffix, hint }: NumberFiel
   );
 }
 
-interface DateFieldProps {
-  label: string;
-  value: string;
-  max?: string;
-  onChange: (value: string) => void;
-  hint?: ReactNode;
-}
-
-export function DateField({ label, value, max, onChange, hint }: DateFieldProps) {
-  return (
-    <label className="field">
-      <span className="field-label">{label}</span>
-      <input type="date" value={value} max={max} onChange={(e) => onChange(e.target.value)} />
-      {hint ? <span className="field-hint">{hint}</span> : null}
-    </label>
-  );
-}
