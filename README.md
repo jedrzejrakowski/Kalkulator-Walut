@@ -166,6 +166,23 @@ jedną, bo pola opisu w programach księgowych bywają jednowierszowe.
 Na telefonie wiersz nie mieści się nawet w połowie, więc poniżej 760 px tabela
 rozkłada się na kafelki: te same dane, jedno pod drugim.
 
+**Sortowanie i filtr.** Nagłówki *Zdarzenie*, *Kwota* i *Wynik* sortują po
+kliknięciu: rosnąco, malejąco, a za trzecim razem wracają do kolejności liczenia
+— bez tego kroku nie dałoby się wrócić do stanu wyjściowego. Sortowanie jest
+stabilne, więc dwa przeliczenia z tego samego dnia zachowują kolejność.
+
+Po wyniku sortujemy zawsze po wartości w złotych, bo to jedyna liczba wspólna
+dla wszystkich walut. Sortowanie po kwocie w walucie obcej ma sens dopiero po
+zawężeniu do jednej waluty — milion dongów i dwieście euro to nie ta sama skala
+— i stopka mówi o tym wprost.
+
+Filtr walut bierze listę z samych danych, nie ze spisu NBP: nie ma sensu
+oferować waluty, której nigdy się nie przeliczało. Wpis trafia do wyniku, gdy
+waluta stoi po którejkolwiek stronie przeliczenia.
+
+Poniżej 760 px wiersze stają się kafelkami, więc nagłówków tabeli nie ma w co
+kliknąć — sortowanie dostaje wtedy własne pole obok filtra.
+
 **Gdzie to siedzi.** W `localStorage` tej przeglądarki, na tym komputerze —
 nigdzie nie jest wysyłane i zniknie razem z danymi witryny. To notatnik
 pomocniczy, a nie dokumentacja księgowa; dowodem pozostaje to, co w księgach.

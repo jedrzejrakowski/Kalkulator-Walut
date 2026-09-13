@@ -135,3 +135,69 @@ export function opisDoSchowka(p: Przeliczenie): string {
 
   return `${rachunek.join('; ')}; ${tabele}; zdarzenie gospodarcze ${poPolsku(p.dataZdarzenia)}`;
 }
+
+/** Po czym układamy historię. `zapis` to kolejność liczenia, czyli stan domyślny. */
+export type Klucz = 'zapis' | 'data' | 'kwota' | 'wynik';
+export type Kierunek = 'rosnaco' | 'malejaco';
+
+export interface Uklad {
+  klucz: Klucz;
+  kierunek: Kierunek;
+  /** Kod waluty, która ma wystąpić we wpisie; null oznacza wszystkie. */
+  waluta: string | null;
+}
+
+export const UKLAD_DOMYSLNY: Uklad = { klucz: 'zapis', kierunek: 'malejaco', waluta: null };
+
+/** Czy wpis dotyczy tej waluty — po którejkolwiek stronie przeliczenia. */
+function dotyczy(wpis: Wpis, kod: string): boolean {
+  const { kurs, kursDocelowy } = wpis.przeliczenie;
+  return kurs.kod === kod || kursDocelowy?.kod === kod;
+}
+
+/**
+ * Waluty obecne w historii, wraz z liczbą wpisów.
+ *
+ * Lista filtra bierze się z samych danych, a nie ze spisu NBP: nie ma sensu
+ * oferować wyboru waluty, której nigdy się nie przeliczało.
+ */
+export function uzyteWaluty(historia: Wpis[]): { kod: string; ile: number }[] {
+  const liczniki = new Map<string, number>();
+  for (const wpis of historia) {
+    const { kurs, kursDocelowy } = wpis.przeliczenie;
+    for (const kod of new Set([kurs.kod, kursDocelowy?.kod].filter((k): k is string => !!k))) {
+      liczniki.set(kod, (liczniki.get(kod) ?? 0) + 1);
+    }
+  }
+  return [...liczniki].map(([kod, ile]) => ({ kod, ile })).sort((a, b) => a.kod.localeCompare(b.kod));
+}
+
+/** Wartość, po której porównujemy wpisy przy danym kluczu. */
+function miara(wpis: Wpis, klucz: Klucz): number | string {
+  const p = wpis.przeliczenie;
+  if (klucz === 'data') return p.dataZdarzenia;
+  // Kwota w walucie obcej: porównywalna dopiero po zawężeniu do jednej waluty,
+  // bo milion dongów i dwieście euro to nie jest ta sama skala.
+  if (klucz === 'kwota') return p.kwota;
+  // Wynik w złotych to jedyna liczba wspólna dla wszystkich walut.
+  if (klucz === 'wynik') return p.wynikPln;
+  return wpis.id;
+}
+
+/**
+ * Historia po zastosowaniu filtra i sortowania.
+ *
+ * Sortowanie jest stabilne, więc wpisy o równej mierze — na przykład dwa
+ * przeliczenia z tego samego dnia — zachowują kolejność liczenia.
+ */
+export function ulozHistorie(historia: Wpis[], uklad: Uklad): Wpis[] {
+  const wybrane = uklad.waluta ? historia.filter((w) => dotyczy(w, uklad.waluta!)) : [...historia];
+  const znak = uklad.kierunek === 'rosnaco' ? 1 : -1;
+
+  return wybrane.sort((a, b) => {
+    const x = miara(a, uklad.klucz);
+    const y = miara(b, uklad.klucz);
+    if (x === y) return 0;
+    return (x < y ? -1 : 1) * znak;
+  });
+}

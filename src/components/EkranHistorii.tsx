@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { poPolsku } from '../domain/dates';
-import { LIMIT, opisDoSchowka, type Wpis } from '../domain/historia';
+import {
+  LIMIT, UKLAD_DOMYSLNY, opisDoSchowka, ulozHistorie, uzyteWaluty,
+  type Klucz, type Uklad, type Wpis,
+} from '../domain/historia';
 import { formatAmount, formatKurs, formatPln } from '../domain/money';
 
 interface Props {
@@ -15,6 +18,44 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
   // jednym przeliczeniem, całej historii już nie.
   const [pytamOCzyszczenie, setPytamOCzyszczenie] = useState(false);
   const [skopiowany, setSkopiowany] = useState<number | null>(null);
+  const [uklad, setUklad] = useState<Uklad>(UKLAD_DOMYSLNY);
+
+  const waluty = useMemo(() => uzyteWaluty(historia), [historia]);
+  const widoczne = useMemo(() => ulozHistorie(historia, uklad), [historia, uklad]);
+
+  /**
+   * Kliknięcie w nagłówek: rosnąco, malejąco, a za trzecim razem z powrotem
+   * do kolejności liczenia. Bez trzeciego kroku nie dałoby się wrócić do stanu
+   * wyjściowego inaczej niż przez przeładowanie.
+   */
+  function sortuj(klucz: Klucz) {
+    setUklad((p) => {
+      if (p.klucz !== klucz) return { ...p, klucz, kierunek: 'rosnaco' };
+      if (p.kierunek === 'rosnaco') return { ...p, kierunek: 'malejaco' };
+      return { ...p, klucz: 'zapis', kierunek: 'malejaco' };
+    });
+  }
+
+  const kierunekOpisowo = (klucz: Klucz) =>
+    uklad.klucz !== klucz ? 'none' : uklad.kierunek === 'rosnaco' ? 'ascending' : 'descending';
+
+  function Naglowek({ klucz, children }: { klucz: Klucz; children: React.ReactNode }) {
+    const czynny = uklad.klucz === klucz;
+    return (
+      <th scope="col" aria-sort={kierunekOpisowo(klucz)} className={klucz === 'wynik' ? 'historia__prawa' : undefined}>
+        <button
+          type="button"
+          className={`historia__sort${czynny ? ' historia__sort--czynny' : ''}`}
+          onClick={() => sortuj(klucz)}
+        >
+          {children}
+          <span className="historia__strzalka" aria-hidden="true">
+            {czynny ? (uklad.kierunek === 'rosnaco' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    );
+  }
 
   async function kopiuj(wpis: Wpis) {
     try {
@@ -51,11 +92,68 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
         ) : null}
       </div>
 
+      {historia.length > 0 ? (
+        <div className="historia__narzedzia">
+          <label className="historia__filtr">
+            <span>Waluta</span>
+            <select
+              value={uklad.waluta ?? ''}
+              onChange={(e) => setUklad((p) => ({ ...p, waluta: e.target.value || null }))}
+            >
+              <option value="">Wszystkie ({historia.length})</option>
+              {waluty.map((w) => (
+                <option key={w.kod} value={w.kod}>
+                  {w.kod} ({w.ile})
+                </option>
+              ))}
+            </select>
+          </label>
+          {/* Na wąskim ekranie wiersze stają się kafelkami, więc nagłówków
+              tabeli nie ma w co kliknąć — sortowanie dostaje własne pole. */}
+          <label className="historia__sortuj">
+            <span>Kolejność</span>
+            <select
+              value={uklad.klucz === 'zapis' ? 'zapis' : `${uklad.klucz}:${uklad.kierunek}`}
+              onChange={(e) => {
+                const [klucz, kierunek] = e.target.value.split(':');
+                setUklad((p) => ({
+                  ...p,
+                  klucz: klucz as Klucz,
+                  kierunek: (kierunek as Uklad['kierunek']) ?? 'malejaco',
+                }));
+              }}
+            >
+              <option value="zapis">Kolejność liczenia</option>
+              <option value="data:malejaco">Zdarzenie — od najnowszego</option>
+              <option value="data:rosnaco">Zdarzenie — od najstarszego</option>
+              <option value="kwota:malejaco">Kwota — malejąco</option>
+              <option value="kwota:rosnaco">Kwota — rosnąco</option>
+              <option value="wynik:malejaco">Wynik w zł — malejąco</option>
+              <option value="wynik:rosnaco">Wynik w zł — rosnąco</option>
+            </select>
+          </label>
+
+          {uklad.klucz !== 'zapis' || uklad.waluta ? (
+            <button type="button" className="link" onClick={() => setUklad(UKLAD_DOMYSLNY)}>
+              Wyczyść układ
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       {historia.length === 0 ? (
         <p className="placeholder">
           Tu trafią przeliczenia, które wykonasz.{' '}
           <button type="button" className="link" onClick={onPowrot}>
             Wróć do przeliczania
+          </button>
+          .
+        </p>
+      ) : widoczne.length === 0 ? (
+        <p className="placeholder">
+          Żadne przeliczenie nie dotyczy waluty {uklad.waluta}.{' '}
+          <button type="button" className="link" onClick={() => setUklad(UKLAD_DOMYSLNY)}>
+            Pokaż wszystkie
           </button>
           .
         </p>
@@ -65,16 +163,16 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
             <table className="historia">
               <thead>
                 <tr>
-                  <th scope="col">Zdarzenie</th>
-                  <th scope="col">Kwota</th>
+                  <Naglowek klucz="data">Zdarzenie</Naglowek>
+                  <Naglowek klucz="kwota">Kwota</Naglowek>
                   <th scope="col">Kurs</th>
                   <th scope="col">Tabela</th>
-                  <th scope="col" className="historia__prawa">Wynik</th>
+                  <Naglowek klucz="wynik">Wynik</Naglowek>
                   <th scope="col"><span className="sr-only">Działania</span></th>
                 </tr>
               </thead>
               <tbody>
-                {historia.map((w) => {
+                {widoczne.map((w) => {
                   const { przeliczenie: p } = w;
                   const cel = p.kursDocelowy;
                   return (
@@ -145,8 +243,15 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
           </div>
 
           <p className="field-hint">
-            Najnowsze przeliczenia na górze; przechowujemy najwyżej {LIMIT} ostatnich, teraz
-            jest ich {historia.length}. Historia siedzi w tej przeglądarce, na tym komputerze —
+            {uklad.waluta
+              ? `Pokazujemy ${widoczne.length} z ${historia.length} przeliczeń — tylko te dotyczące ${uklad.waluta}. `
+              : `Przechowujemy najwyżej ${LIMIT} ostatnich przeliczeń, teraz jest ich ${historia.length}. `}
+            {uklad.klucz === 'kwota'
+              ? 'Kwoty w różnych walutach porównują się tylko po zawężeniu do jednej z nich. '
+              : uklad.klucz === 'wynik'
+                ? 'Sortowanie po wyniku idzie po wartości w złotych — to jedyna liczba wspólna dla wszystkich walut. '
+                : ''}
+            Historia siedzi w tej przeglądarce, na tym komputerze —
             nigdzie nie jest wysyłana i zniknie razem z danymi witryny. To notatnik pomocniczy,
             a nie dokumentacja księgowa.
           </p>

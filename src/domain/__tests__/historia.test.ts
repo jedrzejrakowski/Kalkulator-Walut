@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LIMIT, dopisz, opisDoSchowka, usun, wczytaj, wyczysc, zapisz, type Wpis } from '../historia';
+import {
+  LIMIT, UKLAD_DOMYSLNY, dopisz, opisDoSchowka, ulozHistorie, usun, uzyteWaluty,
+  wczytaj, wyczysc, zapisz, type Uklad, type Wpis,
+} from '../historia';
 import type { Kurs, Przeliczenie } from '../types';
 
 const kurs = (kod: string, wartosc: number, numer = '15/A/NBP/2026', data = '2026-09-11'): Kurs => ({
@@ -144,5 +147,91 @@ describe('opis do schowka', () => {
   it('podaje kurs waluty o małej wartości jednostkowej bez ucinania', () => {
     const opis = opisDoSchowka(przeliczenie({ kurs: kurs('VND', 0.00014309) }));
     expect(opis).toContain('0,00014309 zł');
+  });
+});
+
+describe('układanie historii', () => {
+  // Kolejność zapisu: najpierw EUR, potem VND, USD, na końcu EUR→USD.
+  const historia: Wpis[] = [
+    { id: 4, przeliczenie: przeliczenie({ kwota: 1000, kurs: kurs('EUR', 4.3264), kursDocelowy: kurs('USD', 3.7111), wynikDocelowy: 1165.8, dataZdarzenia: '2026-09-12', wynikPln: 4326.4 }) },
+    { id: 3, przeliczenie: przeliczenie({ kwota: 250.5, kurs: kurs('USD', 3.7111), dataZdarzenia: '2026-09-10', wynikPln: 929.63 }) },
+    { id: 2, przeliczenie: przeliczenie({ kwota: 1_000_000, kurs: kurs('VND', 0.00014309), dataZdarzenia: '2026-09-09', wynikPln: 143.09 }) },
+    { id: 1, przeliczenie: przeliczenie({ kwota: 2000, kurs: kurs('EUR', 4.3264), dataZdarzenia: '2026-09-11', wynikPln: 8652.8 }) },
+  ];
+  const uklad = (n: Partial<Uklad>): Uklad => ({ ...UKLAD_DOMYSLNY, ...n });
+  const ids = (u: Partial<Uklad>) => ulozHistorie(historia, uklad(u)).map((w) => w.id);
+
+  it('domyślnie zachowuje kolejność liczenia, od najnowszego', () => {
+    expect(ids({})).toEqual([4, 3, 2, 1]);
+  });
+
+  it('sortuje po dacie zdarzenia w obie strony', () => {
+    expect(ids({ klucz: 'data', kierunek: 'rosnaco' })).toEqual([2, 3, 1, 4]);
+    expect(ids({ klucz: 'data', kierunek: 'malejaco' })).toEqual([4, 1, 3, 2]);
+  });
+
+  it('sortuje po wyniku w złotych — jedynej liczbie wspólnej dla walut', () => {
+    expect(ids({ klucz: 'wynik', kierunek: 'rosnaco' })).toEqual([2, 3, 4, 1]);
+  });
+
+  it('sortuje po kwocie w walucie obcej', () => {
+    expect(ids({ klucz: 'kwota', kierunek: 'malejaco' })).toEqual([2, 1, 4, 3]);
+  });
+
+  it('filtruje po walucie źródłowej', () => {
+    expect(ids({ waluta: 'EUR' })).toEqual([4, 1]);
+    expect(ids({ waluta: 'VND' })).toEqual([2]);
+  });
+
+  it('filtr łapie też walutę docelową', () => {
+    // Wpis 4 to EUR→USD, wpis 3 to USD na złote — oba dotyczą dolara.
+    expect(ids({ waluta: 'USD' })).toEqual([4, 3]);
+  });
+
+  it('filtr i sortowanie działają razem', () => {
+    expect(ids({ waluta: 'EUR', klucz: 'kwota', kierunek: 'rosnaco' })).toEqual([4, 1]);
+  });
+
+  it('nieznana waluta daje pustą listę', () => {
+    expect(ids({ waluta: 'CHF' })).toEqual([]);
+  });
+
+  it('nie przestawia wpisów o równej mierze', () => {
+    const rowne: Wpis[] = [
+      { id: 2, przeliczenie: przeliczenie({ dataZdarzenia: '2026-09-12' }) },
+      { id: 1, przeliczenie: przeliczenie({ dataZdarzenia: '2026-09-12' }) },
+    ];
+    expect(ulozHistorie(rowne, uklad({ klucz: 'data' })).map((w) => w.id)).toEqual([2, 1]);
+  });
+
+  it('nie rusza listy wejściowej', () => {
+    ulozHistorie(historia, uklad({ klucz: 'data', kierunek: 'rosnaco' }));
+    expect(historia.map((w) => w.id)).toEqual([4, 3, 2, 1]);
+  });
+});
+
+describe('waluty obecne w historii', () => {
+  const historia: Wpis[] = [
+    { id: 3, przeliczenie: przeliczenie({ kurs: kurs('EUR', 4.3), kursDocelowy: kurs('USD', 3.7) }) },
+    { id: 2, przeliczenie: przeliczenie({ kurs: kurs('USD', 3.7) }) },
+    { id: 1, przeliczenie: przeliczenie({ kurs: kurs('EUR', 4.3) }) },
+  ];
+
+  it('liczy wpisy dotyczące każdej waluty, po obu stronach przeliczenia', () => {
+    expect(uzyteWaluty(historia)).toEqual([
+      { kod: 'EUR', ile: 2 },
+      { kod: 'USD', ile: 2 },
+    ]);
+  });
+
+  it('nie liczy wpisu dwa razy, gdy ta sama waluta stoi po obu stronach', () => {
+    const dziwny: Wpis[] = [
+      { id: 1, przeliczenie: przeliczenie({ kurs: kurs('EUR', 4.3), kursDocelowy: kurs('EUR', 4.3) }) },
+    ];
+    expect(uzyteWaluty(dziwny)).toEqual([{ kod: 'EUR', ile: 1 }]);
+  });
+
+  it('pusta historia daje pustą listę', () => {
+    expect(uzyteWaluty([])).toEqual([]);
   });
 });
