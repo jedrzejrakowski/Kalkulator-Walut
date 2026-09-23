@@ -1767,3 +1767,171 @@ th.historia__prawa .historia__sort { flex-direction: row-reverse; }
   .historia__narzedzia { display: grid; gap: 10px; }
   .historia__filtr select { flex: 1; }
 }
+
+/* --- zakres dat w historii --- */
+
+.historia__zakres {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.historia__zakres input[type='date'] {
+  width: auto;
+  padding: 6px 9px;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 759px) {
+  .historia__zakres { display: grid; grid-template-columns: 1fr 1fr; }
+  .historia__zakres input[type='date'] { width: 100%; }
+}
+
+/* --- zestawienie do druku i PDF --- */
+
+/* Na ekranie niewidoczne — istnieje tylko po to, żeby było co drukować. */
+.druk { display: none; }
+
+/* Nazwana strona: marginesy i numeracja dotyczą tylko zestawienia, a nie
+   zwykłego wydruku wyniku przeliczenia. */
+@page zestawienie {
+  size: A4;
+  margin: 14mm 12mm 16mm;
+
+  @bottom-right {
+    content: 'Strona ' counter(page) ' z ' counter(pages);
+    font: 8pt system-ui, sans-serif;
+    color: #666666;
+  }
+}
+
+@media print {
+  /* Marginesy kartki przeglądarka maluje według schematu kolorów strony,
+     nie według tła. W motywie ciemnym dawało to czarną ramkę wokół białego
+     dokumentu — schemat trzeba wymusić, bo reguły motywu są szczegółowsze. */
+  html,
+  body {
+    background: #ffffff !important;
+    color-scheme: light !important;
+  }
+
+  /* Przy drukowaniu zestawienia znika cała aplikacja, zostaje sam dokument. */
+  body.drukuje-zestawienie > :not(.druk) { display: none !important; }
+
+  body.drukuje-zestawienie .druk {
+    display: block;
+    page: zestawienie;
+    /* Kolory dokumentu są stałe — motyw ciemny ani paleta nie mają tu wstępu. */
+    color: #000000;
+    background: #ffffff;
+    font: 9pt/1.35 system-ui, 'Segoe UI', Arial, sans-serif;
+  }
+
+  .druk__naglowek { margin-bottom: 5mm; }
+  .druk__naglowek h1 { font-size: 15pt; font-weight: 700; margin: 0 0 1mm; }
+  .druk__naglowek p { margin: 0; color: #444444; }
+
+  .druk__tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Nagłówek tabeli powtarza się na każdej stronie — przy kilkuset
+     paragonach każda kartka czyta się bez wracania do pierwszej. */
+  .druk__tabela thead { display: table-header-group; }
+  .druk__tabela tr { break-inside: avoid; }
+
+  .druk__tabela th,
+  .druk__tabela td {
+    padding: 1.2mm 1.6mm;
+    border-bottom: 0.3pt solid #bbbbbb;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .druk__tabela thead th {
+    font-weight: 700;
+    background: #eeeeee;
+    border-bottom: 0.6pt solid #888888;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .druk__liczba { text-align: right !important; }
+  .druk__lp { width: 8mm; color: #555555; }
+
+  .druk__podsumowanie {
+    break-inside: avoid;
+    margin-top: 7mm;
+  }
+
+  .druk__podsumowanie h2 { font-size: 10.5pt; font-weight: 700; margin: 0 0 2mm; }
+  .druk__tabela--sumy { width: auto; min-width: 110mm; }
+
+  .druk__razem th {
+    font-size: 10pt;
+    border-top: 0.8pt solid #000000;
+    border-bottom: none;
+    padding-top: 2mm;
+  }
+
+  .druk__przypis { margin: 3mm 0 0; font-size: 8pt; color: #444444; max-width: 170mm; }
+}
+
+/* --- panel eksportu w historii --- */
+
+.eksport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-alt);
+}
+
+.eksport__tytul {
+  display: grid;
+  gap: 5px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.eksport__tytul input { padding: 7px 10px; font-size: 0.875rem; }
+
+.eksport__przyciski { display: flex; gap: 8px; }
+
+.eksport__przycisk {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 78px;
+  padding: 8px 14px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.eksport__przycisk:hover { filter: brightness(1.08); }
+
+.eksport__przycisk:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.eksport__opis {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 559px) {
+  .eksport { grid-template-columns: 1fr; }
+  .eksport__przycisk { flex: 1; }
+}

@@ -190,6 +190,31 @@ waluta stoi po którejkolwiek stronie przeliczenia.
 Poniżej 760 px wiersze stają się kafelkami, więc nagłówków tabeli nie ma w co
 kliknąć — sortowanie dostaje wtedy własne pole obok filtra.
 
+**Zestawienie do rozliczenia wyjazdu.** Nad tabelą historii stoi panel eksportu:
+tytuł i dwa przyciski, PDF i Excel. Zestawienie obejmuje dokładnie to, co widać po
+filtrach — waluta i zakres dat po dacie zdarzenia wyodrębniają jeden wyjazd. Bez
+wybranego sortowania idzie chronologicznie; wybrane sortowanie przechodzi do pliku.
+
+Każdy wiersz niesie komplet dowodowy: Lp., datę zdarzenia, kwotę, walutę, kurs,
+numer i datę tabeli NBP, wartość w złotych. Pod tabelą sumy dla każdej waluty
+i suma końcowa, liczone na groszach jako liczbach całkowitych, z wierszy już
+zaokrąglonych — i zdanie mówiące o tej metodzie, żeby audytor sumujący kolumnę
+inaczej nie szukał grosza różnicy. Model zestawienia (`zestawienie.ts`) jest wspólny
+dla obu formatów, więc PDF i Excel pokazują te same liczby.
+
+*Excel* to prawdziwy .xlsx pisany bez bibliotek (`zip.ts`, `xlsx.ts`): kwoty i kursy
+jako liczby, daty jako daty, kurs z pełną dokładnością tabeli, sumy jako formuły
+SUMA i SUMA.JEŻELI z zapisaną wartością, zamrożony nagłówek. Plik sprawdzony
+niezależnie: openpyxl go czyta, a LibreOffice Calc otwiera i przelicza formuły
+do tych samych sum.
+
+*PDF* powstaje przez okno drukowania („Zapisz jako PDF") z osobnego widoku A4:
+nagłówek tabeli powtarza się na każdej stronie, podsumowanie nie rozrywa się
+między strony, w stopce „Strona X z Y". Na czas drukowania tytuł strony zmienia
+się na tytuł zestawienia, bo z niego przeglądarka bierze nazwę pliku. Wydruk jest
+zawsze czarno na białym — schemat kolorów wymuszony, bo w motywie ciemnym
+przeglądarka malowała marginesy kartki na czarno.
+
 **Gdzie to siedzi.** W `localStorage` tej przeglądarki, na tym komputerze —
 nigdzie nie jest wysyłane i zniknie razem z danymi witryny. To notatnik
 pomocniczy, a nie dokumentacja księgowa; dowodem pozostaje to, co w księgach.
@@ -246,6 +271,9 @@ src/domain/     logika niezależna od interfejsu
   grosze.ts     dokładne mnożenie i dzielenie z zaokrągleniem do groszy
   szukaj.ts     dopasowanie waluty do frazy, wspólne dla obu pól
   kalendarz.ts  siatka miesiąca, dni wolne i dzień kursu
+  zestawienie.ts model zestawienia: wiersze, sumy per waluta, suma końcowa
+  xlsx.ts       zestawienie jako arkusz Excela
+  zip.ts        archiwum ZIP z sumą CRC-32, na potrzeby .xlsx
   historia.ts   zapis przeliczeń w pamięci przeglądarki i opis do schowka
   wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
 src/components/ interfejs

@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
-import { poPolsku } from '../domain/dates';
+import { dzisiaj, poPolsku } from '../domain/dates';
+import { TYP_XLSX, plikXlsx } from '../domain/xlsx';
 import {
-  LIMIT, UKLAD_DOMYSLNY, opisDoSchowka, ulozHistorie, uzyteWaluty,
+  TYTUL_DOMYSLNY, kolejnoscZestawienia, nazwaPliku, zestawienie,
+} from '../domain/zestawienie';
+import { ZestawienieDruk, drukujZestawienie } from './ZestawienieDruk';
+import {
+  LIMIT, UKLAD_DOMYSLNY, czyZmieniony, opisDoSchowka, ulozHistorie, uzyteWaluty,
   type Klucz, type Uklad, type Wpis,
 } from '../domain/historia';
 import { formatAmount, formatKurs, formatPln } from '../domain/money';
@@ -19,9 +24,30 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
   const [pytamOCzyszczenie, setPytamOCzyszczenie] = useState(false);
   const [skopiowany, setSkopiowany] = useState<number | null>(null);
   const [uklad, setUklad] = useState<Uklad>(UKLAD_DOMYSLNY);
+  const [tytul, setTytul] = useState('');
 
   const waluty = useMemo(() => uzyteWaluty(historia), [historia]);
   const widoczne = useMemo(() => ulozHistorie(historia, uklad), [historia, uklad]);
+
+  // Zestawienie obejmuje dokładnie to, co widać po filtrach — tak wyodrębnia
+  // się jeden wyjazd: waluty, zakres dat, i gotowe.
+  const dokument = useMemo(
+    () => zestawienie(kolejnoscZestawienia(widoczne, uklad), tytul, dzisiaj()),
+    [widoczne, uklad, tytul],
+  );
+
+  function pobierzExcel() {
+    const url = URL.createObjectURL(new Blob([plikXlsx(dokument).slice()], { type: TYP_XLSX }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nazwaPliku(dokument, 'xlsx');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Adres zwalniamy z opóźnieniem — część przeglądarek zaczyna pobieranie
+    // dopiero po powrocie z obsługi kliknięcia.
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
 
   /**
    * Kliknięcie w nagłówek: rosnąco, malejąco, a za trzecim razem z powrotem
@@ -108,6 +134,28 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
               ))}
             </select>
           </label>
+          {/* Zakres dat po dacie zdarzenia — tak wyodrębnia się jeden wyjazd. */}
+          <div className="historia__zakres">
+            <label className="historia__filtr">
+              <span>Od</span>
+              <input
+                type="date"
+                value={uklad.od ?? ''}
+                max={uklad.doDnia ?? undefined}
+                onChange={(e) => setUklad((p) => ({ ...p, od: e.target.value || null }))}
+              />
+            </label>
+            <label className="historia__filtr">
+              <span>do</span>
+              <input
+                type="date"
+                value={uklad.doDnia ?? ''}
+                min={uklad.od ?? undefined}
+                onChange={(e) => setUklad((p) => ({ ...p, doDnia: e.target.value || null }))}
+              />
+            </label>
+          </div>
+
           {/* Na wąskim ekranie wiersze stają się kafelkami, więc nagłówków
               tabeli nie ma w co kliknąć — sortowanie dostaje własne pole. */}
           <label className="historia__sortuj">
@@ -133,11 +181,42 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
             </select>
           </label>
 
-          {uklad.klucz !== 'zapis' || uklad.waluta ? (
+          {czyZmieniony(uklad) ? (
             <button type="button" className="link" onClick={() => setUklad(UKLAD_DOMYSLNY)}>
               Wyczyść układ
             </button>
           ) : null}
+        </div>
+      ) : null}
+
+      {widoczne.length > 0 ? (
+        <div className="eksport">
+          <label className="eksport__tytul">
+            <span>Tytuł zestawienia</span>
+            <input
+              type="text"
+              value={tytul}
+              placeholder={TYTUL_DOMYSLNY}
+              maxLength={120}
+              onChange={(e) => setTytul(e.target.value)}
+            />
+          </label>
+          <div className="eksport__przyciski">
+            <button type="button" className="eksport__przycisk" onClick={() => drukujZestawienie(dokument)}>
+              PDF
+            </button>
+            <button type="button" className="eksport__przycisk" onClick={pobierzExcel}>
+              Excel
+            </button>
+          </div>
+          <p className="eksport__opis">
+            {widoczne.length === historia.length
+              ? `Zestawienie obejmie wszystkie ${widoczne.length} pozycji — zawęź je walutą i zakresem dat, żeby wyodrębnić jeden wyjazd.`
+              : `Zestawienie obejmie ${widoczne.length} widocznych pozycji.`}
+            {uklad.klucz === 'zapis' ? ' Kolejność chronologiczna, po dacie zdarzenia.' : ' W wybranej kolejności.'}
+            {' '}PDF zapisuje się w oknie drukowania: „Zapisz jako PDF".
+          </p>
+          <ZestawienieDruk z={dokument} />
         </div>
       ) : null}
 
@@ -151,7 +230,7 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
         </p>
       ) : widoczne.length === 0 ? (
         <p className="placeholder">
-          Żadne przeliczenie nie dotyczy waluty {uklad.waluta}.{' '}
+          Żadne przeliczenie nie pasuje do wybranych filtrów.{' '}
           <button type="button" className="link" onClick={() => setUklad(UKLAD_DOMYSLNY)}>
             Pokaż wszystkie
           </button>
@@ -243,8 +322,8 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
           </div>
 
           <p className="field-hint">
-            {uklad.waluta
-              ? `Pokazujemy ${widoczne.length} z ${historia.length} przeliczeń — tylko te dotyczące ${uklad.waluta}. `
+            {widoczne.length < historia.length
+              ? `Pokazujemy ${widoczne.length} z ${historia.length} przeliczeń. `
               : `Przechowujemy najwyżej ${LIMIT} ostatnich przeliczeń, teraz jest ich ${historia.length}. `}
             {uklad.klucz === 'kwota'
               ? 'Kwoty w różnych walutach porównują się tylko po zawężeniu do jednej z nich. '

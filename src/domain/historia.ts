@@ -8,7 +8,7 @@
  * Wpis niesie komplet danych potrzebnych na dowodzie — kurs, numer tabeli
  * i jej datę — bo po tygodniu sama kwota i wynik niczego nie tłumaczą.
  */
-import { poPolsku } from './dates';
+import { poPolsku, type DataIso } from './dates';
 import { formatAmount, formatKurs, formatPln } from './money';
 import type { Przeliczenie } from './types';
 
@@ -145,9 +145,20 @@ export interface Uklad {
   kierunek: Kierunek;
   /** Kod waluty, która ma wystąpić we wpisie; null oznacza wszystkie. */
   waluta: string | null;
+  /** Najwcześniejsza data zdarzenia, włącznie; null oznacza bez ograniczenia. */
+  od: DataIso | null;
+  /** Najpóźniejsza data zdarzenia, włącznie; null oznacza bez ograniczenia. */
+  doDnia: DataIso | null;
 }
 
-export const UKLAD_DOMYSLNY: Uklad = { klucz: 'zapis', kierunek: 'malejaco', waluta: null };
+export const UKLAD_DOMYSLNY: Uklad = {
+  klucz: 'zapis', kierunek: 'malejaco', waluta: null, od: null, doDnia: null,
+};
+
+/** Czy układ zawęża albo przestawia historię względem stanu wyjściowego. */
+export function czyZmieniony(uklad: Uklad): boolean {
+  return uklad.klucz !== 'zapis' || uklad.waluta !== null || uklad.od !== null || uklad.doDnia !== null;
+}
 
 /** Czy wpis dotyczy tej waluty — po którejkolwiek stronie przeliczenia. */
 function dotyczy(wpis: Wpis, kod: string): boolean {
@@ -191,7 +202,15 @@ function miara(wpis: Wpis, klucz: Klucz): number | string {
  * przeliczenia z tego samego dnia — zachowują kolejność liczenia.
  */
 export function ulozHistorie(historia: Wpis[], uklad: Uklad): Wpis[] {
-  const wybrane = uklad.waluta ? historia.filter((w) => dotyczy(w, uklad.waluta!)) : [...historia];
+  // Zakres dat po dacie zdarzenia, a nie po dacie liczenia: wyjazd z marca
+  // przeliczany w kwietniu ma trafić do zestawienia marcowego.
+  const wybrane = historia.filter((w) => {
+    const data = w.przeliczenie.dataZdarzenia;
+    if (uklad.waluta && !dotyczy(w, uklad.waluta)) return false;
+    if (uklad.od && data < uklad.od) return false;
+    if (uklad.doDnia && data > uklad.doDnia) return false;
+    return true;
+  });
   const znak = uklad.kierunek === 'rosnaco' ? 1 : -1;
 
   return wybrane.sort((a, b) => {

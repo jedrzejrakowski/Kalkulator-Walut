@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  LIMIT, UKLAD_DOMYSLNY, dopisz, opisDoSchowka, ulozHistorie, usun, uzyteWaluty,
+  LIMIT, UKLAD_DOMYSLNY, czyZmieniony, dopisz, opisDoSchowka, ulozHistorie, usun, uzyteWaluty,
   wczytaj, wyczysc, zapisz, type Uklad, type Wpis,
 } from '../historia';
 import type { Kurs, Przeliczenie } from '../types';
@@ -192,6 +192,21 @@ describe('układanie historii', () => {
     expect(ids({ waluta: 'EUR', klucz: 'kwota', kierunek: 'rosnaco' })).toEqual([4, 1]);
   });
 
+  it('zawęża do zakresu dat zdarzenia, z obu stron włącznie', () => {
+    // Daty zdarzeń: 4 → 12.09, 3 → 10.09, 2 → 09.09, 1 → 11.09
+    expect(ids({ od: '2026-09-10', doDnia: '2026-09-11' })).toEqual([3, 1]);
+    expect(ids({ od: '2026-09-11' })).toEqual([4, 1]);
+    expect(ids({ doDnia: '2026-09-09' })).toEqual([2]);
+  });
+
+  it('zakres dat działa razem z walutą i sortowaniem', () => {
+    expect(ids({ waluta: 'EUR', od: '2026-09-11', klucz: 'data', kierunek: 'rosnaco' })).toEqual([1, 4]);
+  });
+
+  it('pusty zakres daje pustą listę', () => {
+    expect(ids({ od: '2026-09-13' })).toEqual([]);
+  });
+
   it('nieznana waluta daje pustą listę', () => {
     expect(ids({ waluta: 'CHF' })).toEqual([]);
   });
@@ -233,5 +248,18 @@ describe('waluty obecne w historii', () => {
 
   it('pusta historia daje pustą listę', () => {
     expect(uzyteWaluty([])).toEqual([]);
+  });
+});
+
+describe('czy układ odbiega od wyjściowego', () => {
+  it('wyjściowy nie jest zmieniony', () => {
+    expect(czyZmieniony(UKLAD_DOMYSLNY)).toBe(false);
+  });
+
+  it('każdy filtr i sortowanie liczą się jako zmiana', () => {
+    expect(czyZmieniony({ ...UKLAD_DOMYSLNY, klucz: 'data' })).toBe(true);
+    expect(czyZmieniony({ ...UKLAD_DOMYSLNY, waluta: 'EUR' })).toBe(true);
+    expect(czyZmieniony({ ...UKLAD_DOMYSLNY, od: '2026-09-01' })).toBe(true);
+    expect(czyZmieniony({ ...UKLAD_DOMYSLNY, doDnia: '2026-09-30' })).toBe(true);
   });
 });
