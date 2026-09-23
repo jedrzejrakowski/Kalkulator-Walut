@@ -1,7 +1,12 @@
-/** Zaokrąglenie do pełnych groszy, odporne na błąd reprezentacji zmiennoprzecinkowej. */
-export function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
+import { doGroszy } from './grosze';
+
+/**
+ * Zaokrąglenie do pełnych groszy — tylko dla sum i różnic kwot.
+ *
+ * Iloczyny i ilorazy liczymy w `grosze.ts`, bo błąd powstaje już przy samym
+ * mnożeniu na liczbach zmiennoprzecinkowych, zanim cokolwiek zaokrąglimy.
+ */
+export const round2 = doGroszy;
 
 const currency = new Intl.NumberFormat('pl-PL', {
   style: 'currency',

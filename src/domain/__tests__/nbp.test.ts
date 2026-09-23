@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BladNbp, pobierzKurs, pobierzSerie, pobierzWaluty } from '../nbp';
-import { doGroszy, przelicz, zloz } from '../convert';
+import { przelicz, zloz } from '../convert';
+import { iloczyn, iloraz } from '../grosze';
 import type { Kurs } from '../types';
 
 const brak = () => new Response('404 NotFound', { status: 404 });
@@ -98,6 +99,21 @@ describe('przeliczenie', () => {
     expect(zloz(42, '2026-06-24', kurs).wynikPln).toBe(178.78);
   });
 
+  it('zaokrągla połówkę grosza w górę — błąd zgłoszony z kwotą 400,055', () => {
+    // Iloczyn 2759 × 0,1450 to dokładnie 400,055. Mnożenie zmiennoprzecinkowe
+    // dawało 400,05499999…, a poprzednie zaokrąglenie ścinało to do 400,05.
+    const tani: Kurs = { ...kurs, kod: 'CZK', kurs: 0.145 };
+    expect(zloz(2759, '2026-06-24', tani).wynikPln).toBe(400.06);
+    // Ta sama pułapka przy większych kwotach.
+    expect(zloz(42110, '2026-06-24', { ...kurs, kurs: 0.5005 }).wynikPln).toBe(21076.06);
+  });
+
+  it('dzieli przez kurs docelowy z tym samym poprawnym zaokrągleniem', () => {
+    // 1067,33 zł ÷ 1,0016 to dokładnie 1065,625. Stare dzielenie dawało 1065,62.
+    const usd: Kurs = { ...kurs, kod: 'USD', kurs: 1.0016 };
+    expect(zloz(1067.33, '2026-06-24', { ...kurs, kurs: 1 }, usd).wynikDocelowy).toBe(1065.63);
+  });
+
   it('wskazuje dzień, z którego kurs powinien pochodzić', () => {
     expect(zloz(100, '2026-06-24', kurs).dataWymagana).toBe('2026-06-23');
   });
@@ -126,7 +142,7 @@ describe('dokładność kursu na dowodzie', () => {
     };
     const wynik = zloz(1_000_000, '2026-09-11', kurs);
     expect(wynik.wynikPln).toBe(143.09);
-    expect(doGroszy(wynik.kwota * kurs.kurs)).toBe(wynik.wynikPln);
+    expect(iloczyn(wynik.kwota, kurs.kurs)).toBe(wynik.wynikPln);
   });
 });
 
@@ -151,8 +167,8 @@ describe('przeliczanie między walutami obcymi', () => {
     // Zaokrąglenie na złotym jest celowe: to ta kwota trafia do ksiąg,
     // więc dalsze przeliczenie musi wychodzić właśnie z niej.
     const w = zloz(1000, '2026-06-24', eur, usd);
-    expect(doGroszy(w.kwota * w.kurs.kurs)).toBe(w.wynikPln);
-    expect(doGroszy(w.wynikPln / usd.kurs)).toBe(w.wynikDocelowy);
+    expect(iloczyn(w.kwota, w.kurs.kurs)).toBe(w.wynikPln);
+    expect(iloraz(w.wynikPln, usd.kurs)).toBe(w.wynikDocelowy);
   });
 
   it('podaje kurs krzyżowy', () => {

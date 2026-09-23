@@ -1,11 +1,7 @@
 import { poprzedniDzienRoboczy, type DataIso } from './dates';
+import { iloczyn, iloraz } from './grosze';
 import { pobierzKurs } from './nbp';
 import type { Kurs, Przeliczenie } from './types';
-
-/** Zaokrąglenie do pełnych groszy, odporne na błąd reprezentacji zmiennoprzecinkowej. */
-export function doGroszy(wartosc: number): number {
-  return Math.round((wartosc + Number.EPSILON) * 100) / 100;
-}
 
 /**
  * Składa wynik z gotowych kursów — rozdzielone od pobierania, żeby dało się testować.
@@ -22,7 +18,9 @@ export function zloz(
   kursDocelowy: Kurs | null = null,
 ): Przeliczenie {
   const dataWymagana = poprzedniDzienRoboczy(dataZdarzenia);
-  const wynikPln = doGroszy(kwota * kurs.kurs);
+  // Iloczyn i iloraz liczone dokładnie: mnożenie na liczbach zmiennoprzecinkowych
+  // gubiło połówkę grosza, bo 400,055 leży w pamięci jako 400,05499999…
+  const wynikPln = iloczyn(kwota, kurs.kurs);
 
   return {
     kwota,
@@ -31,7 +29,7 @@ export function zloz(
     dataZdarzenia,
     dataWymagana,
     wynikPln,
-    wynikDocelowy: kursDocelowy ? doGroszy(wynikPln / kursDocelowy.kurs) : null,
+    wynikDocelowy: kursDocelowy ? iloraz(wynikPln, kursDocelowy.kurs) : null,
     kursKrzyzowy: kursDocelowy ? kurs.kurs / kursDocelowy.kurs : null,
     kursStarszyNizWymagany:
       kurs.dataTabeli < dataWymagana ||

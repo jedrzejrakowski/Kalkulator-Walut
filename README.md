@@ -29,6 +29,13 @@ wymaga art. 11a ust. 2 ustawy o PIT, który zakazuje kursów krzyżowych z rynku
 Wartość w złotych zaokrąglana jest do groszy przed dalszym przeliczeniem, bo to ona
 trafia do ksiąg. Dzięki temu rachunek pokazany na ekranie odtwarza się krok po kroku.
 
+**Zaokrąglenie do groszy liczymy na liczbach całkowitych**, nie zmiennoprzecinkowych
+(`src/domain/grosze.ts`). Liczba 400,055 leży w pamięci komputera jako 400,05499999…,
+więc zwykłe zaokrąglenie dawało 400,05 zamiast 400,06 — i tak było przy każdej kwocie
+kończącej się równo na połówce grosza. Kwotę i kurs rozkładamy na cyfry, mnożymy
+dokładnie i zaokrąglamy raz, na końcu: końcówki od pół grosza w górę. Test porównuje
+wynik ze wzorcem na dwustu tysiącach losowych par kwoty i kursu.
+
 Obie waluty mogą pochodzić z różnych tabel, a wtedy także z różnych dni — tabela B
 bywa starsza, bo ogłaszana jest raz w tygodniu. Wynik pokazuje obie tabele osobno.
 
@@ -235,7 +242,8 @@ z własnym oknem, ikoną w menu Start i przejętym paskiem tytułu. Wymaga adres
 src/domain/     logika niezależna od interfejsu
   dates.ts      daty kalendarzowe bez pułapki stref czasowych
   nbp.ts        klient API: lista walut oraz kurs z przejściem A → B
-  convert.ts    złożenie wyniku i zaokrąglenie do groszy
+  convert.ts    złożenie wyniku przeliczenia
+  grosze.ts     dokładne mnożenie i dzielenie z zaokrągleniem do groszy
   szukaj.ts     dopasowanie waluty do frazy, wspólne dla obu pól
   kalendarz.ts  siatka miesiąca, dni wolne i dzień kursu
   historia.ts   zapis przeliczeń w pamięci przeglądarki i opis do schowka
