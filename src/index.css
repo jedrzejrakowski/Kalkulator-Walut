@@ -1805,6 +1805,19 @@ th.historia__prawa .historia__sort { flex-direction: row-reverse; }
   }
 }
 
+/* To samo zestawienie w poziomie: szersze kolumny, większa czcionka, ale
+   około 20 wierszy na stronę zamiast 34 — stąd pion jako domyślny. */
+@page zestawienie-poziomo {
+  size: A4 landscape;
+  margin: 12mm 14mm 14mm;
+
+  @bottom-right {
+    content: 'Strona ' counter(page) ' z ' counter(pages);
+    font: 8pt system-ui, sans-serif;
+    color: #666666;
+  }
+}
+
 @media print {
   /* Marginesy kartki przeglądarka maluje według schematu kolorów strony,
      nie według tła. W motywie ciemnym dawało to czarną ramkę wokół białego
@@ -1825,6 +1838,12 @@ th.historia__prawa .historia__sort { flex-direction: row-reverse; }
     color: #000000;
     background: #ffffff;
     font: 9pt/1.35 system-ui, 'Segoe UI', Arial, sans-serif;
+  }
+
+  /* Po regule ogólnej, żeby orientacja pozioma ją nadpisała. */
+  body.drukuje-zestawienie .druk--poziomo {
+    page: zestawienie-poziomo;
+    font-size: 10pt;
   }
 
   .druk__naglowek { margin-bottom: 5mm; }
@@ -1934,4 +1953,46 @@ th.historia__prawa .historia__sort { flex-direction: row-reverse; }
 @media (max-width: 559px) {
   .eksport { grid-template-columns: 1fr; }
   .eksport__przycisk { flex: 1; }
+}
+
+/* --- orientacja PDF --- */
+
+.orientacja {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.orientacja button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 7px 11px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 0;
+  cursor: pointer;
+}
+
+.orientacja button + button { border-left: 1px solid var(--border-strong); }
+.orientacja button:hover { color: var(--text); }
+
+.orientacja button[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.orientacja button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+@media (max-width: 559px) {
+  .eksport__przyciski { flex-wrap: wrap; }
+  .orientacja { width: 100%; }
+  .orientacja button { flex: 1; justify-content: center; }
 }

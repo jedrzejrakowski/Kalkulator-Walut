@@ -10,11 +10,11 @@ import { METODA, PODSTAWA, nazwaPliku, type Zestawienie } from '../domain/zestaw
  * zestawienia chowamy całą resztę strony, a to łatwe tylko wtedy, gdy
  * dokument jest jej rodzeństwem, a nie potomkiem.
  */
-export function ZestawienieDruk({ z }: { z: Zestawienie }) {
+export function ZestawienieDruk({ z, poziomo }: { z: Zestawienie; poziomo: boolean }) {
   const zakres = z.od && z.doDnia ? `zdarzenia od ${poPolsku(z.od)} do ${poPolsku(z.doDnia)} · ` : '';
 
   return createPortal(
-    <div className="druk" aria-hidden="true">
+    <div className={poziomo ? 'druk druk--poziomo' : 'druk'} aria-hidden="true">
       <header className="druk__naglowek">
         <h1>{z.tytul}</h1>
         <p>

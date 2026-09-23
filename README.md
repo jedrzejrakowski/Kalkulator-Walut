@@ -215,6 +215,12 @@ się na tytuł zestawienia, bo z niego przeglądarka bierze nazwę pliku. Wydruk
 zawsze czarno na białym — schemat kolorów wymuszony, bo w motywie ciemnym
 przeglądarka malowała marginesy kartki na czarno.
 
+Orientację wybiera się przełącznikiem obok przycisku PDF i program ją zapamiętuje.
+Domyślny jest pion: 34 wiersze na stronę wobec 20 w poziomie, więc 200 paragonów
+to 6 kartek zamiast 10. Poziom daje szersze kolumny i czcionkę 10 pt zamiast 9 pt.
+Każda orientacja to osobna nazwana strona `@page` — przeglądarka bierze rozmiar
+kartki z arkusza stylów, więc w oknie drukowania nie trzeba już niczego zmieniać.
+
 **Gdzie to siedzi.** W `localStorage` tej przeglądarki, na tym komputerze —
 nigdzie nie jest wysyłane i zniknie razem z danymi witryny. To notatnik
 pomocniczy, a nie dokumentacja księgowa; dowodem pozostaje to, co w księgach.

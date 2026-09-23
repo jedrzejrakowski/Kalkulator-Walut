@@ -18,6 +18,17 @@ interface Props {
   onPowrot: () => void;
 }
 
+const KLUCZ_ORIENTACJI = 'kalkulator-walut-orientacja-pdf';
+
+/** Ostatnio wybrana orientacja PDF — domyślnie pion, bo mieści więcej wierszy. */
+function czytajOrientacje(): boolean {
+  try {
+    return localStorage.getItem(KLUCZ_ORIENTACJI) === 'poziom';
+  } catch {
+    return false;
+  }
+}
+
 export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) {
   // Potwierdzenie przy czyszczeniu całości: pojedynczy wpis da się odtworzyć
   // jednym przeliczeniem, całej historii już nie.
@@ -25,6 +36,16 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
   const [skopiowany, setSkopiowany] = useState<number | null>(null);
   const [uklad, setUklad] = useState<Uklad>(UKLAD_DOMYSLNY);
   const [tytul, setTytul] = useState('');
+  const [poziomo, setPoziomo] = useState(czytajOrientacje);
+
+  function ustawOrientacje(nowa: boolean) {
+    setPoziomo(nowa);
+    try {
+      localStorage.setItem(KLUCZ_ORIENTACJI, nowa ? 'poziom' : 'pion');
+    } catch {
+      // Bez zapisu wybór i tak działa do zamknięcia okna.
+    }
+  }
 
   const waluty = useMemo(() => uzyteWaluty(historia), [historia]);
   const widoczne = useMemo(() => ulozHistorie(historia, uklad), [historia, uklad]);
@@ -202,6 +223,30 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
             />
           </label>
           <div className="eksport__przyciski">
+            <div className="orientacja" role="group" aria-label="Orientacja strony PDF">
+              <button
+                type="button"
+                aria-pressed={!poziomo}
+                title="Pionowo — więcej wierszy na stronie, mniej kartek"
+                onClick={() => ustawOrientacje(false)}
+              >
+                <svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true">
+                  <rect x="0.75" y="0.75" width="9.5" height="12.5" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+                Pionowo
+              </button>
+              <button
+                type="button"
+                aria-pressed={poziomo}
+                title="Poziomo — szersze kolumny i większa czcionka"
+                onClick={() => ustawOrientacje(true)}
+              >
+                <svg width="14" height="11" viewBox="0 0 14 11" aria-hidden="true">
+                  <rect x="0.75" y="0.75" width="12.5" height="9.5" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+                Poziomo
+              </button>
+            </div>
             <button type="button" className="eksport__przycisk" onClick={() => drukujZestawienie(dokument)}>
               PDF
             </button>
@@ -216,7 +261,7 @@ export function EkranHistorii({ historia, onUsun, onWyczysc, onPowrot }: Props) 
             {uklad.klucz === 'zapis' ? ' Kolejność chronologiczna, po dacie zdarzenia.' : ' W wybranej kolejności.'}
             {' '}PDF zapisuje się w oknie drukowania: „Zapisz jako PDF".
           </p>
-          <ZestawienieDruk z={dokument} />
+          <ZestawienieDruk z={dokument} poziomo={poziomo} />
         </div>
       ) : null}
 
