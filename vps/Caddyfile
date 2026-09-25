@@ -1,0 +1,9 @@
+# Kalkulator walut — plik zapisany przez vps/instaluj.sh (kalkulator-walut).
+#
+# Caddy sam uzyskuje i odnawia certyfikat HTTPS (Let's Encrypt)
+# i przekierowuje http:// na https://. Nie zapisuje dziennika wejść.
+__DOMENA__ {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy 127.0.0.1:8080
+}

@@ -248,15 +248,16 @@ Kroje systemowe działają bez pobierania z sieci, co ma znaczenie za firmowym f
 
 ## Logowanie
 
-Wersja w internecie jest zamknięta hasłem. Hasło sprawdza serwer Vercel, zanim
-wyda jakikolwiek plik aplikacji — bez ważnej sesji nie ma ani strony, ani
-skryptów. Hasło sprawdzane w samej przeglądarce dałoby się obejść w minutę.
+Wersja w internecie jest zamknięta hasłem. Hasło sprawdza serwer, zanim wyda
+jakikolwiek plik aplikacji — bez ważnej sesji nie ma ani strony, ani skryptów.
+Hasło sprawdzane w samej przeglądarce dałoby się obejść w minutę. Logika jest
+jedna (`src/serwer/ochrona.ts`); uruchamia ją Vercel albo serwer na VPS-ie.
 
-**Ustawienie hasła.** W panelu Vercel: projekt → *Settings → Environment
+**Ustawienie hasła.** Na Vercelu: projekt → *Settings → Environment
 Variables* → zmienna `KALKULATOR_HASLO` dla *Production* i *Preview*, potem
-ponowne wdrożenie. Hasła nie ma w kodzie ani w repozytorium. Gdy zmiennej
-zabraknie, kalkulator się nie otworzy (odpowiedź 503), zamiast po cichu otworzyć
-się dla wszystkich.
+ponowne wdrożenie. Na VPS-ie: `sudo bash /opt/kalkulator-walut/vps/haslo.sh`.
+Hasła nie ma w kodzie ani w repozytorium. Gdy go zabraknie, kalkulator się nie
+otworzy (odpowiedź 503), zamiast po cichu otworzyć się dla wszystkich.
 
 **Sesja.** Po zalogowaniu serwer stawia podpisane ciasteczko (HMAC-SHA256,
 niedostępne dla skryptów strony). Bez zaznaczenia „Zapamiętaj na tym urządzeniu”
@@ -275,6 +276,44 @@ straciłaby ikonę. Po złym haśle serwer odczekuje chwilę, co spowalnia
 zgadywanie. Wersja jednoplikowa (`build:artifact`) i serwer deweloperski działają
 bez logowania, bo nie przechodzą przez Vercel.
 
+## Własny serwer (VPS)
+
+Na serwerze z Ubuntu 24.04 kalkulator działa jako mała usługa Node.js
+(`vps/serwer.ts`), a przed nią stoi [Caddy](https://caddyserver.com), który
+sam uzyskuje i odnawia certyfikat HTTPS. Potrzebna jest domena (albo
+subdomena) z rekordem A wskazującym na adres serwera — bez HTTPS przeglądarka
+nie odeśle ciasteczka logowania.
+
+Instalacja na świeżym serwerze, jako administrator:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/instaluj.sh
+sudo bash instaluj.sh kalkulator.twojadomena.pl
+```
+
+Skrypt instaluje Node.js 22 i Caddy, pobiera i buduje program w
+`/opt/kalkulator-walut`, pyta o hasło, uruchamia usługę `kalkulator-walut`,
+otwiera w zaporze tylko SSH, 80 i 443, włącza fail2ban i automatyczne poprawki
+bezpieczeństwa Ubuntu. Można go uruchomić ponownie — wykonane kroki pomija.
+
+| Co | Polecenie |
+|---|---|
+| Aktualizacja do wersji z GitHuba (plus Node.js i Caddy) | `sudo bash /opt/kalkulator-walut/vps/aktualizuj.sh` |
+| Zmiana hasła (wylogowuje wszystkie urządzenia) | `sudo bash /opt/kalkulator-walut/vps/haslo.sh` |
+| Dziennik usługi | `journalctl -u kalkulator-walut -n 50` |
+| Stan usługi | `systemctl status kalkulator-walut` |
+
+Hasło leży w `/etc/kalkulator-walut/haslo`, czytelne tylko dla administratora;
+usługa dostaje je przez `LoadCredential` systemd i działa na osobnym koncie bez
+uprawnień, z odebranym dostępem do reszty systemu. Serwer słucha tylko na
+127.0.0.1:8080 — z internetem rozmawia wyłącznie Caddy. Pliki spoza `dist/` i
+pliki ukryte są niedostępne; pliki z `/assets/` (ze skrótem treści w nazwie)
+przeglądarka trzyma w pamięci, reszta jest sprawdzana przy każdym wejściu.
+
+Próba na własnym komputerze: `npm run build:vps` i
+`KALKULATOR_HASLO=… PORT=8080 node dist-vps/serwer.mjs`, potem
+`http://localhost:8080`.
+
 ## Uruchomienie
 
 ```bash
@@ -283,6 +322,7 @@ npm run dev            # serwer deweloperski
 npm run build          # build produkcyjny do dist/
 npm test               # testy logiki
 npm run build:artifact # jeden samodzielny plik HTML
+npm run build:vps      # serwer na VPS do dist-vps/
 ```
 
 Ikony powstają ze źródeł SVG w `public/icons`; po zmianie rysunku:
@@ -316,6 +356,12 @@ src/components/ interfejs
 src/serwer/     kod uruchamiany na serwerze Vercel
   ochrona.ts    logowanie, podpis sesji, kontrola dostępu do plików
 middleware.ts   wejście dla Vercel: hasło z ustawień projektu → ochrona.ts
+vps/            wersja na własny serwer
+  serwer.ts     ochrona.ts + wydawanie plików z dist/
+  start.ts      uruchomienie: hasło z systemd, port, katalog
+  instaluj.sh   instalacja na Ubuntu 24.04
+  aktualizuj.sh pobranie nowej wersji i ponowne uruchomienie
+  haslo.sh      ustawienie i zmiana hasła
 public/logowanie.html  ekran logowania, samodzielny plik
 ```
 

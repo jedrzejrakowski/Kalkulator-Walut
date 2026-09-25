@@ -182,7 +182,7 @@ export async function obsluz(
 ): Promise<Response> {
   // Brak hasła to błąd wdrożenia — zamykamy, zamiast po cichu otworzyć wszystko.
   if (!haslo) {
-    return tekst('Kalkulator jest zamknięty: w panelu Vercel brakuje zmiennej KALKULATOR_HASLO.', 503);
+    return tekst('Kalkulator jest zamknięty: nie ustawiono hasła (KALKULATOR_HASLO).', 503);
   }
 
   const { pathname } = new URL(zapytanie.url);

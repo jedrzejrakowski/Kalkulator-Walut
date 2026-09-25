@@ -13,17 +13,20 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:artifact": "npm run build && node scripts/build-artifact.mjs"
+    "build:artifact": "npm run build && node scripts/build-artifact.mjs",
+    "build:vps": "npm run build && tsc -p vps && esbuild vps/start.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist-vps/serwer.mjs"
   },
   "dependencies": {
+    "@vercel/functions": "^3.9.9",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "@vercel/functions": "^3.9.9"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@types/node": "^22.20.4",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.4.1",
+    "esbuild": "^0.25.12",
     "jsdom": "^26.0.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
