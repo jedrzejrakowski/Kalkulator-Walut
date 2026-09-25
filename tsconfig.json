@@ -19,5 +19,5 @@
     "exactOptionalPropertyTypes": false,
     "types": ["vitest/globals", "vite/client"]
   },
-  "include": ["src"]
+  "include": ["src", "middleware.ts"]
 }

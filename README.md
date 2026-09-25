@@ -246,6 +246,35 @@ a nie w pikselach: jedno pokrętło skaluje całą typografię.
 
 Kroje systemowe działają bez pobierania z sieci, co ma znaczenie za firmowym filtrem.
 
+## Logowanie
+
+Wersja w internecie jest zamknięta hasłem. Hasło sprawdza serwer Vercel, zanim
+wyda jakikolwiek plik aplikacji — bez ważnej sesji nie ma ani strony, ani
+skryptów. Hasło sprawdzane w samej przeglądarce dałoby się obejść w minutę.
+
+**Ustawienie hasła.** W panelu Vercel: projekt → *Settings → Environment
+Variables* → zmienna `KALKULATOR_HASLO` dla *Production* i *Preview*, potem
+ponowne wdrożenie. Hasła nie ma w kodzie ani w repozytorium. Gdy zmiennej
+zabraknie, kalkulator się nie otworzy (odpowiedź 503), zamiast po cichu otworzyć
+się dla wszystkich.
+
+**Sesja.** Po zalogowaniu serwer stawia podpisane ciasteczko (HMAC-SHA256,
+niedostępne dla skryptów strony). Bez zaznaczenia „Zapamiętaj na tym urządzeniu”
+wygasa po zamknięciu przeglądarki, najpóźniej po 12 godzinach; z zaznaczeniem —
+po 30 dniach. Zmiana hasła w panelu unieważnia od razu wszystkie sesje na
+wszystkich urządzeniach, bo klucz podpisu wyprowadzany jest z hasła.
+
+**Wylogowanie.** Przycisk „Wyloguj” na pasku ekranów. Kasuje ciasteczka oraz kopię
+offline aplikacji, żeby bez sieci nie otworzyła się już po wylogowaniu.
+Historia przeliczeń zostaje w przeglądarce — do jej usunięcia służy
+„Wyczyść historię”.
+
+Bez logowania dostępne są tylko ekran logowania, manifest i ikony — te ostatnie
+przeglądarka pobiera bez ciasteczek, a bez nich zainstalowana aplikacja
+straciłaby ikonę. Po złym haśle serwer odczekuje chwilę, co spowalnia
+zgadywanie. Wersja jednoplikowa (`build:artifact`) i serwer deweloperski działają
+bez logowania, bo nie przechodzą przez Vercel.
+
 ## Uruchomienie
 
 ```bash
@@ -282,7 +311,12 @@ src/domain/     logika niezależna od interfejsu
   zip.ts        archiwum ZIP z sumą CRC-32, na potrzeby .xlsx
   historia.ts   zapis przeliczeń w pamięci przeglądarki i opis do schowka
   wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
+  sesja.ts      znacznik logowania i wylogowanie po stronie przeglądarki
 src/components/ interfejs
+src/serwer/     kod uruchamiany na serwerze Vercel
+  ochrona.ts    logowanie, podpis sesji, kontrola dostępu do plików
+middleware.ts   wejście dla Vercel: hasło z ustawień projektu → ochrona.ts
+public/logowanie.html  ekran logowania, samodzielny plik
 ```
 
 ## Zastrzeżenie

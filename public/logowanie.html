@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Logowanie — Kalkulator walut NBP</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="theme-color" content="#166b5c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+    />
+    <!--
+      Ekran logowania stoi poza aplikacją: serwer wydaje go każdemu, a resztę
+      programu dopiero po podaniu hasła. Dlatego wszystko jest tu w jednym
+      pliku — bez skryptów i stylów aplikacji, których niezalogowany nie dostanie.
+      Kolory to te same tokeny co w src/index.css.
+    -->
+    <style>
+      :root {
+        --skala: 1;
+        --accent-ink: #ffffff;
+        --bg: #f4f5f7;
+        --surface: #ffffff;
+        --surface-alt: #f8f9fb;
+        --border: #dfe2e8;
+        --border-strong: #c6cbd4;
+        --text: #1b1f27;
+        --text-muted: #49505e;
+        --accent: #166b5c;
+        --accent-soft: #e2f1ed;
+        --blad: #a8321f;
+        --blad-soft: #fcebe7;
+        --blad-border: #efc3b9;
+        --warn-bg: #fdf6e3;
+        --warn-border: #e8d8a8;
+        --titlebar-bg: #166b5c;
+        --titlebar-ink: #ffffff;
+        --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+          Roboto, Helvetica, Arial, sans-serif;
+        --shadow: 0 1px 2px rgba(20, 25, 35, 0.06), 0 4px 12px rgba(20, 25, 35, 0.04);
+        color-scheme: light;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #14171d;
+          --surface: #1c2027;
+          --surface-alt: #22262f;
+          --border: #303743;
+          --border-strong: #414a59;
+          --text: #e7eaef;
+          --text-muted: #a7b0bf;
+          --accent: #6ecab4;
+          --accent-soft: #132c27;
+          --accent-ink: #0f1319;
+          --blad: #f0a595;
+          --blad-soft: #34201c;
+          --blad-border: #5a3129;
+          --warn-bg: #2a2517;
+          --warn-border: #4a4128;
+          --titlebar-bg: #114036;
+          --titlebar-ink: #eaf2f8;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+          color-scheme: dark;
+        }
+      }
+
+      :root[data-theme='dark'] {
+        --bg: #14171d;
+        --surface: #1c2027;
+        --surface-alt: #22262f;
+        --border: #303743;
+        --border-strong: #414a59;
+        --text: #e7eaef;
+        --text-muted: #a7b0bf;
+        --accent: #6ecab4;
+        --accent-soft: #132c27;
+        --accent-ink: #0f1319;
+        --blad: #f0a595;
+        --blad-soft: #34201c;
+        --blad-border: #5a3129;
+        --warn-bg: #2a2517;
+        --warn-border: #4a4128;
+        --titlebar-bg: #114036;
+        --titlebar-ink: #eaf2f8;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+        color-scheme: dark;
+      }
+
+      html { font-size: calc(16px * var(--skala, 1)); }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px 16px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      main { width: min(380px, 100%); }
+
+      .naglowek {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 22px;
+      }
+
+      .naglowek svg {
+        display: block;
+        margin-bottom: 12px;
+        border-radius: 15px;
+        box-shadow: 0 2px 6px rgba(20, 25, 35, 0.16);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.625rem;
+        font-weight: 650;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+      }
+
+      .podtytul {
+        margin-top: 3px;
+        font-size: 0.7812rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .karta {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 22px 20px 20px;
+      }
+
+      .blad {
+        margin: 0 0 16px;
+        padding: 9px 12px;
+        font-size: 0.8438rem;
+        color: var(--blad);
+        background: var(--blad-soft);
+        border: 1px solid var(--blad-border);
+        border-radius: 7px;
+      }
+
+      label.etykieta {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.8438rem;
+        font-weight: 600;
+      }
+
+      .pole { position: relative; }
+
+      input[type='password'],
+      input[type='text'] {
+        width: 100%;
+        padding: 10px 76px 10px 11px;
+        font: inherit;
+        font-size: 0.9375rem;
+        color: var(--text);
+        background: var(--surface-alt);
+        border: 1px solid var(--border-strong);
+        border-radius: 7px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      input[type='password']:focus,
+      input[type='text']:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .pokaz {
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        transform: translateY(-50%);
+        padding: 4px 8px;
+        font: inherit;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: transparent;
+        border: 0;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .pokaz:hover { color: var(--accent); background: var(--accent-soft); }
+      .pokaz:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+      .capslock {
+        margin: 6px 0 0;
+        padding: 5px 9px;
+        font-size: 0.7812rem;
+        background: var(--warn-bg);
+        border: 1px solid var(--warn-border);
+        border-radius: 6px;
+      }
+
+      .zapamietaj {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin: 18px 0 20px;
+        cursor: pointer;
+      }
+
+      .zapamietaj input {
+        flex: none;
+        width: 17px;
+        height: 17px;
+        margin: 2px 0 0;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+
+      .zapamietaj strong {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .zapamietaj small {
+        display: block;
+        margin-top: 2px;
+        font-size: 0.7812rem;
+        color: var(--text-muted);
+      }
+
+      button.zaloguj {
+        width: 100%;
+        font: inherit;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--accent-ink);
+        background: var(--accent);
+        border: 0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      button.zaloguj:hover { opacity: 0.9; }
+      button.zaloguj:disabled { opacity: 0.55; cursor: progress; }
+      button.zaloguj:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .stopka {
+        margin: 16px 4px 0;
+        text-align: center;
+        font-size: 0.7812rem;
+        color: var(--text-muted);
+      }
+
+      [hidden] { display: none !important; }
+
+      /* Zainstalowana aplikacja oddaje stronie pasek tytułu — trzeba go zająć,
+         inaczej okna nie dałoby się przeciągnąć. */
+      .pasek-tytulu { display: none; }
+
+      @media (display-mode: window-controls-overlay) {
+        .pasek-tytulu {
+          position: fixed;
+          top: env(titlebar-area-y, 0);
+          left: env(titlebar-area-x, 0);
+          width: env(titlebar-area-width, 100%);
+          height: env(titlebar-area-height, 38px);
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 0 12px;
+          font-size: 0.7812rem;
+          font-weight: 500;
+          background: var(--titlebar-bg);
+          color: var(--titlebar-ink);
+          -webkit-app-region: drag;
+          app-region: drag;
+        }
+
+        body { padding-top: calc(env(titlebar-area-height, 38px) + 24px); }
+      }
+    </style>
+    <script>
+      // Wygląd wybrany w aplikacji (motyw, kolor, krój, wielkość pisma).
+      // Musi zadziałać przed pierwszym rysowaniem, stąd skrypt w nagłówku.
+      // PALETY odpowiadają src/domain/ustawienia.ts — pilnuje tego test.
+      (function () {
+        var PALETY = {
+          "morski": { "jasny": ["#166b5c", "#e2f1ed", "#166b5c"], "ciemny": ["#6ecab4", "#132c27", "#114036"] },
+          "granatowy": { "jasny": ["#1f5f8b", "#e7f0f7", "#1f5f8b"], "ciemny": ["#7cbde8", "#1b2b38", "#163b52"] },
+          "indygo": { "jasny": ["#3f4a9c", "#e9eaf7", "#3f4a9c"], "ciemny": ["#9fa8e8", "#20233a", "#282e5e"] },
+          "sliwkowy": { "jasny": ["#6b3a7a", "#f2e9f5", "#6b3a7a"], "ciemny": ["#c79ad4", "#2b2131", "#3f2349"] },
+          "bordowy": { "jasny": ["#8a3245", "#f8e9ec", "#8a3245"], "ciemny": ["#e59aa9", "#332227", "#4a222c"] },
+          "miedziany": { "jasny": ["#8c4a1e", "#f9ece2", "#8c4a1e"], "ciemny": ["#e0a473", "#322520", "#4c2c14"] },
+          "lesny": { "jasny": ["#3c6b28", "#e8f1e3", "#3c6b28"], "ciemny": ["#9ccb85", "#1f2a1a", "#2a4a1c"] },
+          "grafitowy": { "jasny": ["#3f4654", "#ecedf1", "#3f4654"], "ciemny": ["#b6bfd0", "#272c35", "#2b313c"] }
+        };
+        var KROJE = {
+          "systemowy": "system-ui, 'Segoe UI', Roboto, -apple-system, Arial, sans-serif",
+          "verdana": "Verdana, Geneva, 'DejaVu Sans', sans-serif",
+          "tahoma": "Tahoma, Verdana, 'DejaVu Sans', sans-serif",
+          "trebuchet": "'Trebuchet MS', 'Lucida Grande', 'DejaVu Sans', sans-serif",
+          "arial": "Arial, Helvetica, 'Liberation Sans', sans-serif",
+          "georgia": "Georgia, 'Times New Roman', 'DejaVu Serif', serif",
+          "times": "'Times New Roman', Times, 'Liberation Serif', serif"
+        };
+        var SKALE = [0.9, 1, 1.1, 1.25];
+        var u = {};
+        try {
+          u = JSON.parse(localStorage.getItem('kalkulator-walut:ustawienia') || '{}') || {};
+        } catch (e) {
+          // Tryb prywatny albo zablokowane dane witryny — zostaje wygląd domyślny.
+        }
+        var html = document.documentElement;
+        var systemCiemny = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+        var ciemny = u.motyw === 'ciemny' || (u.motyw !== 'jasny' && systemCiemny);
+        if (u.motyw === 'ciemny') html.dataset.theme = 'dark';
+        if (u.motyw === 'jasny') html.dataset.theme = 'light';
+        var paleta = PALETY[u.paleta];
+        if (paleta && u.paleta !== 'morski') {
+          var o = paleta[ciemny ? 'ciemny' : 'jasny'];
+          html.style.setProperty('--accent', o[0]);
+          html.style.setProperty('--accent-soft', o[1]);
+          html.style.setProperty('--titlebar-bg', o[2]);
+        }
+        if (KROJE[u['krój']]) html.style.setProperty('--font-sans', KROJE[u['krój']]);
+        if (SKALE.indexOf(u.skala) >= 0) html.style.setProperty('--skala', String(u.skala));
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="pasek-tytulu">Kalkulator walut NBP</div>
+
+    <main>
+      <header class="naglowek">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+          <rect width="64" height="64" rx="14" fill="var(--titlebar-bg, #166b5c)" />
+          <path d="M14 22 H44 L38 16" fill="none" stroke="rgba(255, 255, 255, 0.62)" stroke-width="3.4"
+                stroke-linecap="round" stroke-linejoin="round" />
+          <text x="32" y="49" text-anchor="middle" font-family="'IBM Plex Sans', Verdana, Arial, sans-serif"
+                font-size="27" font-weight="700" fill="#ffffff">zł</text>
+        </svg>
+        <h1>Kalkulator walut</h1>
+        <span class="podtytul">Kursy średnie NBP</span>
+      </header>
+
+      <form class="karta" method="post" action="/api/logowanie" id="formularz">
+        <p class="blad" id="blad" role="alert" hidden>Nieprawidłowe hasło. Spróbuj jeszcze raz.</p>
+
+        <label class="etykieta" for="haslo">Hasło</label>
+        <div class="pole">
+          <input id="haslo" name="haslo" type="password" autocomplete="current-password"
+                 required autofocus spellcheck="false" autocapitalize="off" />
+          <button type="button" class="pokaz" id="pokaz" aria-controls="haslo" aria-pressed="false">Pokaż</button>
+        </div>
+        <p class="capslock" id="capslock" hidden>Włączony Caps Lock.</p>
+
+        <label class="zapamietaj">
+          <input type="checkbox" name="zapamietaj" value="1" />
+          <span>
+            <strong>Zapamiętaj na tym urządzeniu</strong>
+            <small>Przez 30 dni bez wpisywania hasła. Nie zaznaczaj na cudzym komputerze.</small>
+          </span>
+        </label>
+
+        <input type="hidden" name="powrot" id="powrot" value="/" />
+        <button type="submit" class="zaloguj" id="zaloguj">Zaloguj</button>
+      </form>
+
+      <p class="stopka">Dostęp tylko dla osób, które znają hasło.</p>
+    </main>
+
+    <script>
+      (function () {
+        var parametry = new URLSearchParams(location.search);
+        // Adres powrotu trafia do pola formularza jako zwykły tekst; serwer
+        // i tak sprawdza go ponownie, zanim pod niego przekieruje.
+        var powrot = parametry.get('powrot');
+        if (powrot) document.getElementById('powrot').value = powrot;
+        if (parametry.get('blad') === '1') document.getElementById('blad').hidden = false;
+
+        var haslo = document.getElementById('haslo');
+        var pokaz = document.getElementById('pokaz');
+        pokaz.addEventListener('click', function () {
+          var widoczne = haslo.type === 'password';
+          haslo.type = widoczne ? 'text' : 'password';
+          pokaz.textContent = widoczne ? 'Ukryj' : 'Pokaż';
+          pokaz.setAttribute('aria-pressed', String(widoczne));
+          haslo.focus();
+        });
+
+        var capslock = document.getElementById('capslock');
+        function sprawdzCapsLock(e) {
+          if (e.getModifierState) capslock.hidden = !e.getModifierState('CapsLock');
+        }
+        haslo.addEventListener('keydown', sprawdzCapsLock);
+        haslo.addEventListener('keyup', sprawdzCapsLock);
+        haslo.addEventListener('blur', function () { capslock.hidden = true; });
+
+        var przycisk = document.getElementById('zaloguj');
+        document.getElementById('formularz').addEventListener('submit', function () {
+          przycisk.disabled = true;
+          przycisk.textContent = 'Sprawdzam…';
+        });
+        // Powrót strzałką „wstecz" przywraca stronę z pamięci — przycisk
+        // zostałby wtedy wyłączony na zawsze.
+        window.addEventListener('pageshow', function () {
+          przycisk.disabled = false;
+          przycisk.textContent = 'Zaloguj';
+        });
+      })();
+    </script>
+  </body>
+</html>

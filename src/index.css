@@ -1282,6 +1282,20 @@ table.szereg thead th { color: var(--text-muted); font-weight: 600; }
   background: var(--accent);
 }
 
+/* Wylogowanie to nie trzeci ekran — na wąskim oknie zostaje sama ikona. */
+.pasek__ikona--wyloguj { flex: 0 0 auto; }
+
+@media (max-width: 759px) {
+  .pasek__ikona--wyloguj .pasek__podpis {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 @media (min-width: 760px) {
   .pasek {
     position: fixed;
@@ -1315,6 +1329,9 @@ table.szereg thead th { color: var(--text-muted); font-weight: 600; }
     right: 5px;
   }
 
+  /* Na dole paska, z dala od przycisków ekranów — żeby nie kliknąć przez pomyłkę. */
+  .pasek__ikona--wyloguj { margin-top: auto; }
+
   /* Miejsce na pasek bierzemy z marginesu okna, nie z szerokości kart:
      stąd max-width powiększony dokładnie o szerokość paska. Reguła stoi
      w pliku po regułach układu, więc to ona ustala ostatnie słowo. */
@@ -1330,6 +1347,9 @@ table.szereg thead th { color: var(--text-muted); font-weight: 600; }
 }
 
 @media (max-width: 759px) {
+  /* Pasek stoi przed stroną, więc marginesy boczne bierze od niej. */
+  .pasek { padding: 12px 20px 0; margin-bottom: 0; }
+
   .pasek__podpis { font-size: 0.8125rem; }
 }
 

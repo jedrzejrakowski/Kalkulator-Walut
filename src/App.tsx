@@ -14,6 +14,7 @@ import { przelicz, ZLOTY } from './domain/convert';
 import { dzisiaj, poPolsku, poprzedniDzienRoboczy } from './domain/dates';
 import * as historiaDomena from './domain/historia';
 import { pobierzWaluty } from './domain/nbp';
+import { czyZalogowany, wyloguj } from './domain/sesja';
 import { wczytaj, zapisz, zastosuj, type Ustawienia } from './domain/ustawienia';
 import type { Przeliczenie, Waluta } from './domain/types';
 
@@ -29,6 +30,7 @@ export default function App() {
   const [panelOtwarty, setPanelOtwarty] = useState(false);
 
   const [ekran, setEkran] = useState<Ekran>('kalkulator');
+  const [zalogowany] = useState(() => czyZalogowany(document.cookie));
   const [historia, setHistoria] = useState(historiaDomena.wczytaj);
 
   const [wynik, setWynik] = useState<Przeliczenie | null>(null);
@@ -100,7 +102,12 @@ export default function App() {
   return (
     <>
       <TitleBar />
-      <PasekNawigacji ekran={ekran} onZmiana={setEkran} ile={historia.length} />
+      <PasekNawigacji
+        ekran={ekran}
+        onZmiana={setEkran}
+        ile={historia.length}
+        onWyloguj={zalogowany ? () => void wyloguj() : undefined}
+      />
       <div className="page">
         <header className="page-header">
           <Logo size={64} className="page-header__mark" />

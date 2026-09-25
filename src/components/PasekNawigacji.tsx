@@ -5,13 +5,15 @@ interface Props {
   onZmiana: (ekran: Ekran) => void;
   /** Liczba zapisanych przeliczeń — pasek ma informować, nie tylko przenosić. */
   ile: number;
+  /** Tylko przy wersji chronionej hasłem; bez tego przycisk się nie pokazuje. */
+  onWyloguj?: () => void;
 }
 
 const IKONA = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none',
   stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round',
   strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
-export function PasekNawigacji({ ekran, onZmiana, ile }: Props) {
+export function PasekNawigacji({ ekran, onZmiana, ile, onWyloguj }: Props) {
   return (
     <nav className="pasek" aria-label="Ekrany">
       <button
@@ -46,6 +48,24 @@ export function PasekNawigacji({ ekran, onZmiana, ile }: Props) {
         <span className="pasek__podpis">Historia</span>
         {ile > 0 ? <span className="pasek__licznik">{ile > 99 ? '99+' : ile}</span> : null}
       </button>
+
+      {onWyloguj ? (
+        <button
+          type="button"
+          className="pasek__ikona pasek__ikona--wyloguj"
+          title="Wyloguj — przy następnym wejściu trzeba będzie podać hasło"
+          aria-label="Wyloguj"
+          onClick={onWyloguj}
+        >
+          {/* Futryna drzwi i strzałka wychodząca na zewnątrz. */}
+          <svg {...IKONA}>
+            <path d="M9 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3" />
+            <path d="M15 16l4-4-4-4" />
+            <path d="M19 12H9" />
+          </svg>
+          <span className="pasek__podpis">Wyloguj</span>
+        </button>
+      ) : null}
     </nav>
   );
 }
