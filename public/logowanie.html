@@ -171,6 +171,10 @@
         font-weight: 600;
       }
 
+      #login { padding-right: 11px; }
+
+      .etykieta--dalej { margin-top: 16px; }
+
       .pole { position: relative; }
 
       input[type='password'],
@@ -369,12 +373,16 @@
       </header>
 
       <form class="karta" method="post" action="/api/logowanie" id="formularz">
-        <p class="blad" id="blad" role="alert" hidden>Nieprawidłowe hasło. Spróbuj jeszcze raz.</p>
+        <p class="blad" id="blad" role="alert" hidden>Nieprawidłowy identyfikator lub hasło. Spróbuj jeszcze raz.</p>
 
-        <label class="etykieta" for="haslo">Hasło</label>
+        <label class="etykieta" for="login">Identyfikator</label>
+        <input id="login" name="login" type="text" autocomplete="username" required autofocus
+               spellcheck="false" autocapitalize="off" maxlength="32" />
+
+        <label class="etykieta etykieta--dalej" for="haslo">Hasło</label>
         <div class="pole">
           <input id="haslo" name="haslo" type="password" autocomplete="current-password"
-                 required autofocus spellcheck="false" autocapitalize="off" />
+                 required spellcheck="false" autocapitalize="off" />
           <button type="button" class="pokaz" id="pokaz" aria-controls="haslo" aria-pressed="false">Pokaż</button>
         </div>
         <p class="capslock" id="capslock" hidden>Włączony Caps Lock.</p>
@@ -391,7 +399,7 @@
         <button type="submit" class="zaloguj" id="zaloguj">Zaloguj</button>
       </form>
 
-      <p class="stopka">Dostęp tylko dla osób, które znają hasło.</p>
+      <p class="stopka">Nie masz konta albo nie pamiętasz hasła? Poproś administratora.</p>
     </main>
 
     <script>
@@ -402,6 +410,12 @@
         var powrot = parametry.get('powrot');
         if (powrot) document.getElementById('powrot').value = powrot;
         if (parametry.get('blad') === '1') document.getElementById('blad').hidden = false;
+        // Po złym haśle identyfikator zostaje wpisany — poprawia się tylko hasło.
+        var login = parametry.get('login');
+        if (login) {
+          document.getElementById('login').value = login;
+          document.getElementById('haslo').focus();
+        }
 
         var haslo = document.getElementById('haslo');
         var pokaz = document.getElementById('pokaz');

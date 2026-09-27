@@ -29,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Kontrola typów
-        run: npx tsc -b
+        run: npx tsc -b && npx tsc -p vps
 
       - name: Testy logiki podatkowej
         run: npm test

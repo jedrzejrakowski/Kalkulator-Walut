@@ -246,73 +246,79 @@ a nie w pikselach: jedno pokrętło skaluje całą typografię.
 
 Kroje systemowe działają bez pobierania z sieci, co ma znaczenie za firmowym filtrem.
 
-## Logowanie
+## Logowanie i konta
 
-Wersja w internecie jest zamknięta hasłem. Hasło sprawdza serwer, zanim wyda
-jakikolwiek plik aplikacji — bez ważnej sesji nie ma ani strony, ani skryptów.
-Hasło sprawdzane w samej przeglądarce dałoby się obejść w minutę. Logika jest
-jedna (`src/serwer/ochrona.ts`); uruchamia ją Vercel albo serwer na VPS-ie.
+Wersja w internecie jest zamknięta: każda osoba loguje się własnym
+identyfikatorem i hasłem. Sprawdza to serwer, zanim wyda jakikolwiek plik
+aplikacji — bez ważnej sesji nie ma ani strony, ani skryptów. Logowanie
+sprawdzane w samej przeglądarce dałoby się obejść w minutę.
 
-**Ustawienie hasła.** Na Vercelu: projekt → *Settings → Environment
-Variables* → zmienna `KALKULATOR_HASLO` dla *Production* i *Preview*, potem
-ponowne wdrożenie. Na VPS-ie: `sudo bash /opt/kalkulator-walut/vps/haslo.sh`.
-Hasła nie ma w kodzie ani w repozytorium. Gdy go zabraknie, kalkulator się nie
-otworzy (odpowiedź 503), zamiast po cichu otworzyć się dla wszystkich.
+**Konta.** Pierwsze konto administratora zakłada się na serwerze:
+`sudo bash vps/admin.sh <identyfikator>`. Kolejne osoby dodaje już
+administrator w aplikacji, na ekranie „Użytkownicy”: identyfikator, imię i
+nazwisko, hasło startowe (losowane), ewentualnie uprawnienia administratora.
+Hasło startowe widać tylko raz, przy nadaniu — przy pierwszym logowaniu trzeba
+je zmienić na własne; do tego czasu aplikacja pokazuje tylko ekran zmiany hasła,
+a serwer odmawia wszelkich czynności na kontach.
+Administrator może też nadać nowe hasło startowe, zmienić uprawnienia i usunąć
+konto; zawsze zostaje przynajmniej jeden administrator i nikt nie usunie sam
+siebie. Każdy zmienia własne hasło w oknie „Konto” (przycisk na dole paska).
 
-**Sesja.** Po zalogowaniu serwer stawia podpisane ciasteczko (HMAC-SHA256,
-niedostępne dla skryptów strony). Bez zaznaczenia „Zapamiętaj na tym urządzeniu”
-wygasa po zamknięciu przeglądarki, najpóźniej po 12 godzinach; z zaznaczeniem —
-po 30 dniach. Zmiana hasła w panelu unieważnia od razu wszystkie sesje na
-wszystkich urządzeniach, bo klucz podpisu wyprowadzany jest z hasła.
+**Hasła.** Serwer trzyma tylko skróty scrypt z losową solą (32 MiB pamięci na
+sprawdzenie, zgodnie z OWASP), w pliku `/var/lib/kalkulator-walut/uzytkownicy.json`
+dostępnym wyłącznie dla usługi. Hasło musi mieć co najmniej 12 znaków i nie
+może zawierać identyfikatora. Po złym haśle serwer odczekuje chwilę; nieistniejące
+konto sprawdza tak samo długo jak istniejące, żeby odpowiedź nie zdradzała, które
+identyfikatory są w użyciu. Najwyżej dwa sprawdzenia hasła naraz — zasypanie
+formularza nie zajmie całego serwera.
 
-**Wylogowanie.** Przycisk „Wyloguj” na pasku ekranów. Kasuje ciasteczka oraz kopię
-offline aplikacji, żeby bez sieci nie otworzyła się już po wylogowaniu.
-Historia przeliczeń zostaje w przeglądarce — do jej usunięcia służy
-„Wyczyść historię”.
+**Sesja.** Podpisane ciasteczko (HMAC-SHA256, niedostępne dla skryptów strony):
+bez „Zapamiętaj na tym urządzeniu” do zamknięcia przeglądarki, najwyżej 12
+godzin; z zaznaczeniem — 30 dni. Podpis obejmuje skrót hasła, więc zmiana
+hasła albo usunięcie konta kończy od razu wszystkie sesje tej osoby, a cudzych
+nie rusza. Uprawnienia działają od razu, bez ponownego logowania.
+
+**Historia** zostaje w przeglądarce, ale osobno dla każdej osoby — na wspólnym
+komputerze każdy widzi tylko swoje przeliczenia. Historia sprzed wprowadzenia
+kont przechodzi na pierwszą osobę, która zaloguje się na danym komputerze.
+
+**Wylogowanie** kasuje ciasteczka oraz kopię offline aplikacji, żeby bez sieci
+nie otworzyła się już po wylogowaniu.
 
 Bez logowania dostępne są tylko ekran logowania, manifest i ikony — te ostatnie
-przeglądarka pobiera bez ciasteczek, a bez nich zainstalowana aplikacja
-straciłaby ikonę. Po złym haśle serwer odczekuje chwilę, co spowalnia
-zgadywanie. Wersja jednoplikowa (`build:artifact`) i serwer deweloperski działają
-bez logowania, bo nie przechodzą przez Vercel.
+przeglądarka pobiera bez ciasteczek. Zapytania do API muszą nieść nagłówek
+`X-Kalkulator`, którego cudza strona nie dołoży. Wersja jednoplikowa
+(`build:artifact`) i serwer deweloperski działają bez logowania.
 
-## Własny serwer (VPS)
+## Serwer (VPS)
 
-Na serwerze z Ubuntu 24.04 kalkulator działa jako mała usługa Node.js
-(`vps/serwer.ts`), a przed nią stoi [Caddy](https://caddyserver.com), który
-sam uzyskuje i odnawia certyfikat HTTPS. Potrzebna jest domena (albo
-subdomena) z rekordem A wskazującym na adres serwera — bez HTTPS przeglądarka
-nie odeśle ciasteczka logowania.
+Kalkulator działa jako mała usługa Node.js (`vps/serwer.ts`) na 127.0.0.1;
+z internetem rozmawia serwer WWW przed nią, który dokłada HTTPS — bez HTTPS
+przeglądarka nie odeśle ciasteczka logowania.
 
-Instalacja na świeżym serwerze, jako administrator:
-
-```bash
-curl -fsSLO https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/instaluj.sh
-sudo bash instaluj.sh kalkulator.twojadomena.pl
-```
-
-Skrypt instaluje Node.js 22 i Caddy, pobiera i buduje program w
-`/opt/kalkulator-walut`, pyta o hasło, uruchamia usługę `kalkulator-walut`,
-otwiera w zaporze tylko SSH, 80 i 443, włącza fail2ban i automatyczne poprawki
-bezpieczeństwa Ubuntu. Można go uruchomić ponownie — wykonane kroki pomija.
+GitHub Actions po każdej zmianie na `main` buduje aplikację i serwer, a potem
+wysyła je na VPS jako użytkownik `deploy`: aplikację do `/srv/apps/kalkulator/`,
+serwer do `/srv/apps/kalkulator-serwer/serwer.mjs`.
 
 | Co | Polecenie |
 |---|---|
-| Aktualizacja do wersji z GitHuba (plus Node.js i Caddy) | `sudo bash /opt/kalkulator-walut/vps/aktualizuj.sh` |
-| Zmiana hasła (wylogowuje wszystkie urządzenia) | `sudo bash /opt/kalkulator-walut/vps/haslo.sh` |
+| Odczyt konfiguracji serwera (niczego nie zmienia) | `curl -fsSL https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/diagnostyka.sh \| sudo bash` |
+| Założenie administratora albo nowe hasło dla niego | `sudo bash vps/admin.sh <identyfikator>` |
+| Lista kont | `sudo -u kalkulator STAN=/var/lib/kalkulator-walut node /srv/apps/kalkulator-serwer/serwer.mjs lista` |
 | Dziennik usługi | `journalctl -u kalkulator-walut -n 50` |
-| Stan usługi | `systemctl status kalkulator-walut` |
 
-Hasło leży w `/etc/kalkulator-walut/haslo`, czytelne tylko dla administratora;
-usługa dostaje je przez `LoadCredential` systemd i działa na osobnym koncie bez
-uprawnień, z odebranym dostępem do reszty systemu. Serwer słucha tylko na
-127.0.0.1:8080 — z internetem rozmawia wyłącznie Caddy. Pliki spoza `dist/` i
-pliki ukryte są niedostępne; pliki z `/assets/` (ze skrótem treści w nazwie)
+Usługa działa na osobnym koncie bez uprawnień, z odebranym dostępem do reszty
+systemu (`vps/kalkulator-walut.service`). Pliki spoza katalogu aplikacji i pliki
+ukryte są niedostępne; pliki z `/assets/` (ze skrótem treści w nazwie)
 przeglądarka trzyma w pamięci, reszta jest sprawdzana przy każdym wejściu.
 
-Próba na własnym komputerze: `npm run build:vps` i
-`KALKULATOR_HASLO=… PORT=8080 node dist-vps/serwer.mjs`, potem
-`http://localhost:8080`.
+Próba na własnym komputerze:
+
+```bash
+npm run build:vps
+STAN=./stan NOWE_HASLO='dlugie-haslo-proby' node dist-vps/serwer.mjs admin ja
+STAN=./stan PORT=8080 node dist-vps/serwer.mjs     # http://localhost:8080
+```
 
 ## Uruchomienie
 
@@ -351,17 +357,16 @@ src/domain/     logika niezależna od interfejsu
   zip.ts        archiwum ZIP z sumą CRC-32, na potrzeby .xlsx
   historia.ts   zapis przeliczeń w pamięci przeglądarki i opis do schowka
   wykres.ts     geometria wykresu: skale, kreski osi, ścieżki
-  sesja.ts      znacznik logowania i wylogowanie po stronie przeglądarki
+  sesja.ts      kto jest zalogowany i wylogowanie
+  konta.ts      zapytania do API kont, hasła startowe
 src/components/ interfejs
-src/serwer/     kod uruchamiany na serwerze Vercel
-  ochrona.ts    logowanie, podpis sesji, kontrola dostępu do plików
-middleware.ts   wejście dla Vercel: hasło z ustawień projektu → ochrona.ts
-vps/            wersja na własny serwer
+vps/            serwer na VPS
+  ochrona.ts    logowanie, sesje, API kont
+  uzytkownicy.ts konta: skróty haseł, zasady, plik na dysku
   serwer.ts     ochrona.ts + wydawanie plików z dist/
-  start.ts      uruchomienie: hasło z systemd, port, katalog
-  instaluj.sh   instalacja na Ubuntu 24.04
-  aktualizuj.sh pobranie nowej wersji i ponowne uruchomienie
-  haslo.sh      ustawienie i zmiana hasła
+  start.ts      uruchomienie i polecenia admin / lista
+  admin.sh      założenie administratora na serwerze
+  diagnostyka.sh odczyt konfiguracji serwera
 public/logowanie.html  ekran logowania, samodzielny plik
 ```
 

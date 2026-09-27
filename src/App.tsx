@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CurrencyPicker } from './components/CurrencyPicker';
 import { Logo } from './components/Logo';
 import { EkranHistorii } from './components/EkranHistorii';
+import { EkranPierwszegoHasla } from './components/EkranPierwszegoHasla';
+import { EkranUzytkownikow } from './components/EkranUzytkownikow';
+import { OknoKonta } from './components/OknoKonta';
 import { PanelUstawien } from './components/PanelUstawien';
 import { PasekNawigacji, type Ekran } from './components/PasekNawigacji';
 import { NumberField } from './components/fields';
@@ -14,7 +17,8 @@ import { przelicz, ZLOTY } from './domain/convert';
 import { dzisiaj, poPolsku, poprzedniDzienRoboczy } from './domain/dates';
 import * as historiaDomena from './domain/historia';
 import { pobierzWaluty } from './domain/nbp';
-import { czyZalogowany, wyloguj } from './domain/sesja';
+import { BladSesji, pobierzJa, type Konto } from './domain/konta';
+import { zalogowanyJako } from './domain/sesja';
 import { wczytaj, zapisz, zastosuj, type Ustawienia } from './domain/ustawienia';
 import type { Przeliczenie, Waluta } from './domain/types';
 
@@ -30,8 +34,32 @@ export default function App() {
   const [panelOtwarty, setPanelOtwarty] = useState(false);
 
   const [ekran, setEkran] = useState<Ekran>('kalkulator');
-  const [zalogowany] = useState(() => czyZalogowany(document.cookie));
-  const [historia, setHistoria] = useState(historiaDomena.wczytaj);
+
+  // Kto jest zalogowany: identyfikator od razu z ciasteczka (od niego zależy,
+  // czyją historię wczytać), reszta — imię, uprawnienia — z serwera.
+  const [login] = useState(() => zalogowanyJako(document.cookie));
+  const [konto, setKonto] = useState<Konto | null>(null);
+  const [oknoKonta, setOknoKonta] = useState(false);
+  const kluczHistorii = historiaDomena.kluczHistorii(login);
+  const [historia, setHistoria] = useState(() => {
+    historiaDomena.przejmijWspolna(login);
+    return historiaDomena.wczytaj(kluczHistorii);
+  });
+
+  const doLogowania = useCallback(() => window.location.assign('/logowanie.html'), []);
+
+  useEffect(() => {
+    if (!login) return;
+    let aktualne = true;
+    pobierzJa()
+      .then((k) => aktualne && setKonto(k))
+      .catch((e: unknown) => {
+        if (e instanceof BladSesji) doLogowania();
+      });
+    return () => {
+      aktualne = false;
+    };
+  }, [login, doLogowania]);
 
   const [wynik, setWynik] = useState<Przeliczenie | null>(null);
   const [blad, setBlad] = useState<string | null>(null);
@@ -75,7 +103,7 @@ export default function App() {
       // wtedy, gdy jest kompletna, a osobny przycisk łatwo pominąć.
       setHistoria((poprzednia) => {
         const nowa = historiaDomena.dopisz(poprzednia, policzone);
-        if (nowa !== poprzednia) historiaDomena.zapisz(nowa);
+        if (nowa !== poprzednia) historiaDomena.zapisz(nowa, kluczHistorii);
         return nowa;
       });
     } catch (e) {
@@ -89,13 +117,13 @@ export default function App() {
   function usunZHistorii(id: number) {
     setHistoria((poprzednia) => {
       const nowa = historiaDomena.usun(poprzednia, id);
-      historiaDomena.zapisz(nowa);
+      historiaDomena.zapisz(nowa, kluczHistorii);
       return nowa;
     });
   }
 
   function wyczyscHistorie() {
-    historiaDomena.wyczysc();
+    historiaDomena.wyczysc(kluczHistorii);
     setHistoria([]);
   }
 
@@ -106,7 +134,8 @@ export default function App() {
         ekran={ekran}
         onZmiana={setEkran}
         ile={historia.length}
-        onWyloguj={zalogowany ? () => void wyloguj() : undefined}
+        konto={konto ?? (login ? { login, admin: false } : null)}
+        onKonto={() => setOknoKonta(true)}
       />
       <div className="page">
         <header className="page-header">
@@ -135,7 +164,20 @@ export default function App() {
           onZamknij={() => setPanelOtwarty(false)}
         />
 
-        {ekran === 'historia' ? (
+        {konto ? (
+          <OknoKonta
+            otwarty={oknoKonta}
+            konto={konto}
+            onZmianaKonta={setKonto}
+            onZamknij={() => setOknoKonta(false)}
+          />
+        ) : null}
+
+        {konto?.wymagaZmiany ? (
+          <EkranPierwszegoHasla konto={konto} onZmieniono={setKonto} />
+        ) : ekran === 'uzytkownicy' && konto?.admin ? (
+          <EkranUzytkownikow ja={konto} onBladSesji={doLogowania} />
+        ) : ekran === 'historia' ? (
           <EkranHistorii
             historia={historia}
             onUsun={usunZHistorii}

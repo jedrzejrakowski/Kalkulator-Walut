@@ -1,9 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { KROJE, PALETY, SKALE } from '../../domain/ustawienia';
-import { ADRES_WYLOGOWANIA as WYLOGUJ_W_APLIKACJI, czyZalogowany } from '../../domain/sesja';
-import { ADRES_LOGOWANIA, ADRES_WYLOGOWANIA, CIASTKO_ZNACZNIK, STRONA_LOGOWANIA } from '../ochrona';
-import strona from '../../../public/logowanie.html?raw';
+import { KROJE, PALETY, SKALE } from '../../src/domain/ustawienia';
+import { ADRES_WYLOGOWANIA as WYLOGUJ_W_APLIKACJI, NAGLOWEK_API as NAGLOWEK_W_APLIKACJI, zalogowanyJako } from '../../src/domain/sesja';
+import { ADRES_LOGOWANIA, ADRES_WYLOGOWANIA, CIASTKO_ZNACZNIK, NAGLOWEK_API, STRONA_LOGOWANIA } from '../ochrona';
+import { NAJKROTSZE_HASLO as NAJKROTSZE_W_APLIKACJI } from '../../src/domain/konta';
+import { NAJKROTSZE_HASLO } from '../uzytkownicy';
+import strona from '../../public/logowanie.html?raw';
 
 /**
  * Ekran logowania jest osobnym plikiem bez dostępu do kodu aplikacji, więc
@@ -42,27 +44,36 @@ describe('ekran logowania', () => {
 
   it('wysyła formularz tam i w takiej postaci, jakiej oczekuje serwer', () => {
     expect(strona).toContain(`<form class="karta" method="post" action="${ADRES_LOGOWANIA}"`);
+    expect(strona).toMatch(/<input id="login" name="login" type="text"[^>]*autocomplete="username"/);
     expect(strona).toMatch(/<input id="haslo" name="haslo" type="password"/);
     expect(strona).toContain('<input type="checkbox" name="zapamietaj" value="1" />');
     expect(strona).toContain('<input type="hidden" name="powrot" id="powrot" value="/" />');
   });
 
-  it('wstawia adres powrotu jako wartość pola, nigdy jako kod strony', () => {
+  it('wstawia adres powrotu i identyfikator jako wartości pól, nigdy jako kod strony', () => {
     expect(strona).toContain("document.getElementById('powrot').value = powrot;");
+    expect(strona).toContain("document.getElementById('login').value = login;");
     expect(strona).not.toMatch(/innerHTML|document\.write|insertAdjacentHTML/);
   });
 
-  it('aplikacja wylogowuje pod adresem, który obsługuje serwer', () => {
+  it('aplikacja wylogowuje pod adresem i pyta API z nagłówkiem, których oczekuje serwer', () => {
     expect(WYLOGUJ_W_APLIKACJI).toBe(ADRES_WYLOGOWANIA);
+    expect(NAGLOWEK_W_APLIKACJI.toLowerCase()).toBe(NAGLOWEK_API);
+  });
+
+  it('aplikacja wymaga takiej samej długości hasła jak serwer', () => {
+    expect(NAJKROTSZE_W_APLIKACJI).toBe(NAJKROTSZE_HASLO);
   });
 });
 
 describe('znacznik logowania w aplikacji', () => {
-  it('rozpoznaje znacznik wśród innych ciasteczek', () => {
-    expect(czyZalogowany(`${CIASTKO_ZNACZNIK}=1`)).toBe(true);
-    expect(czyZalogowany(`motyw=ciemny; ${CIASTKO_ZNACZNIK}=1; inne=2`)).toBe(true);
-    expect(czyZalogowany('')).toBe(false);
-    expect(czyZalogowany(`${CIASTKO_ZNACZNIK}=0`)).toBe(false);
-    expect(czyZalogowany(`x${CIASTKO_ZNACZNIK}=1`)).toBe(false);
+  it('odczytuje identyfikator z jawnego ciasteczka', () => {
+    expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=anna.nowak`)).toBe('anna.nowak');
+    expect(zalogowanyJako(`motyw=ciemny; ${CIASTKO_ZNACZNIK}=jedrzej; inne=2`)).toBe('jedrzej');
+    expect(zalogowanyJako('')).toBeNull();
+    expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=`)).toBeNull();
+    expect(zalogowanyJako(`x${CIASTKO_ZNACZNIK}=jedrzej`)).toBeNull();
+    // Coś, co nie jest identyfikatorem, nie trafi do klucza historii.
+    expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=..%2F`)).toBeNull();
   });
 });

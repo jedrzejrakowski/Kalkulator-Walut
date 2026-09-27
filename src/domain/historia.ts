@@ -15,6 +15,33 @@ import type { Przeliczenie } from './types';
 const KLUCZ = 'kalkulator-walut-historia';
 
 /**
+ * Klucz historii w pamięci przeglądarki — osobny dla każdej zalogowanej osoby.
+ *
+ * Przy wspólnym komputerze w biurze każdy widzi tylko swoje przeliczenia.
+ * Bez logowania (wersja lokalna, jednoplikowa) zostaje klucz wspólny.
+ */
+export function kluczHistorii(login: string | null): string {
+  return login ? `${KLUCZ}:${login}` : KLUCZ;
+}
+
+/**
+ * Historia sprzed wprowadzenia kont przechodzi na pierwszą osobę, która
+ * zaloguje się na tym urządzeniu — zamiast przepaść albo być widoczna dla
+ * wszystkich.
+ */
+export function przejmijWspolna(login: string | null): void {
+  if (!login) return;
+  try {
+    const wspolna = localStorage.getItem(KLUCZ);
+    const wlasny = kluczHistorii(login);
+    if (wspolna !== null && localStorage.getItem(wlasny) === null) localStorage.setItem(wlasny, wspolna);
+    localStorage.removeItem(KLUCZ);
+  } catch {
+    // Zablokowane dane witryny — nie ma czego przenosić.
+  }
+}
+
+/**
  * Ile wpisów trzymamy. Przy kilkunastu przeliczeniach dziennie to zapas na
  * wiele miesięcy, a localStorage nie zbliża się do swojego limitu.
  */
@@ -78,9 +105,9 @@ function poprawny(kandydat: unknown): kandydat is Wpis {
  * starsza wersja programu albo ktoś, kto zajrzał do narzędzi deweloperskich.
  * Jeden zepsuty wpis nie może wywrócić całego ekranu.
  */
-export function wczytaj(): Wpis[] {
+export function wczytaj(klucz = KLUCZ): Wpis[] {
   try {
-    const zapisane = localStorage.getItem(KLUCZ);
+    const zapisane = localStorage.getItem(klucz);
     if (!zapisane) return [];
     const odczytane: unknown = JSON.parse(zapisane);
     if (!Array.isArray(odczytane)) return [];
@@ -91,17 +118,17 @@ export function wczytaj(): Wpis[] {
   }
 }
 
-export function zapisz(historia: Wpis[]): void {
+export function zapisz(historia: Wpis[], klucz = KLUCZ): void {
   try {
-    localStorage.setItem(KLUCZ, JSON.stringify(historia));
+    localStorage.setItem(klucz, JSON.stringify(historia));
   } catch {
     // Brak zapisu nie może przerwać liczenia; historia zadziała do zamknięcia okna.
   }
 }
 
-export function wyczysc(): void {
+export function wyczysc(klucz = KLUCZ): void {
   try {
-    localStorage.removeItem(KLUCZ);
+    localStorage.removeItem(klucz);
   } catch {
     // Jak wyżej — czyszczenie stanu w pamięci i tak się powiedzie.
   }

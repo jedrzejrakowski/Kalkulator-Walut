@@ -5,10 +5,9 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { WAZNOSC_SESJI, wydajZeton } from '../../src/serwer/ochrona';
+import { WAZNOSC_SESJI, wydajZeton } from '../ochrona';
 import { LIMIT_TRESCI, utworzSerwer } from '../serwer';
-
-const HASLO = 'jesienne-liscie-nad-wisla';
+import { HASLO_ADMINA, konta, srodowisko, type Srodowisko } from './pomoc';
 
 interface Odp {
   status: number;
@@ -37,6 +36,7 @@ const STRONA = { accept: 'text/html', 'sec-fetch-dest': 'document' };
 
 describe('serwer na VPS', () => {
   let katalogTestu: string;
+  let konto: Srodowisko;
   let serwer: Server;
   let port: number;
   let ciastko: string;
@@ -56,15 +56,18 @@ describe('serwer na VPS', () => {
     // Plik obok katalogu aplikacji — nie może wyjść na zewnątrz.
     await writeFile(path.join(katalogTestu, 'sekret.txt'), 'TAJNE');
 
-    serwer = utworzSerwer({ katalog: dist, haslo: HASLO });
+    konto = await srodowisko();
+    serwer = utworzSerwer({ katalog: dist, kontekst: konto.kontekst });
     await new Promise<void>((r) => serwer.listen(0, '127.0.0.1', r));
     port = (serwer.address() as AddressInfo).port;
-    ciastko = `kw_sesja=${await wydajZeton(HASLO, Date.now() + WAZNOSC_SESJI)}`;
+    const [admin] = await konta();
+    ciastko = `kw_sesja=${wydajZeton(konto.kontekst.klucz, admin!, Date.now() + WAZNOSC_SESJI)}`;
   });
 
   afterAll(async () => {
     await new Promise((r) => serwer.close(r));
     await rm(katalogTestu, { recursive: true, force: true });
+    await konto.sprzataj();
   });
 
   it('niezalogowanego odsyła na ekran logowania, a skryptów nie wydaje', async () => {
@@ -92,26 +95,27 @@ describe('serwer na VPS', () => {
     expect((await zapytaj(port, '/icons/icon.svg')).naglowki['content-type']).toBe('image/svg+xml');
   });
 
-  it('logowanie przez formularz działa tak samo jak na Vercelu', async () => {
+  it('logowanie formularzem: identyfikator i hasło', async () => {
     const zle = await zapytaj(port, '/api/logowanie', {
       metoda: 'POST',
       naglowki: { 'content-type': 'application/x-www-form-urlencoded' },
-      tresc: 'haslo=zgaduje&powrot=%2F',
+      tresc: 'login=jedrzej&haslo=zgaduje&powrot=%2F',
     });
     expect(zle.status).toBe(303);
-    expect(zle.naglowki.location).toBe('/logowanie.html?blad=1&powrot=%2F');
+    expect(zle.naglowki.location).toBe('/logowanie.html?blad=1&powrot=%2F&login=jedrzej');
     expect(zle.naglowki['set-cookie']).toBeUndefined();
 
     const dobre = await zapytaj(port, '/api/logowanie', {
       metoda: 'POST',
       naglowki: { 'content-type': 'application/x-www-form-urlencoded' },
-      tresc: `haslo=${encodeURIComponent(HASLO)}&zapamietaj=1&powrot=%2F`,
+      tresc: `login=jedrzej&haslo=${encodeURIComponent(HASLO_ADMINA)}&zapamietaj=1&powrot=%2F`,
     });
     expect(dobre.status).toBe(303);
     expect(dobre.naglowki.location).toBe('/');
     const ciastka = dobre.naglowki['set-cookie']!;
     expect(ciastka).toHaveLength(2);
-    expect(ciastka[0]).toMatch(/^kw_sesja=v1\..*HttpOnly; Secure; SameSite=Lax; Max-Age=2592000$/);
+    expect(ciastka[0]).toMatch(/^kw_sesja=v2\..*HttpOnly; Secure; SameSite=Lax; Max-Age=2592000$/);
+    expect(ciastka[1]).toMatch(/^kw_zalogowany=jedrzej;/);
 
     const zeton = ciastka[0]!.split(';')[0]!;
     const aplikacja = await zapytaj(port, '/', { naglowki: { ...STRONA, cookie: zeton } });
@@ -200,18 +204,20 @@ describe('serwer na VPS', () => {
     }
   });
 
-  it('bez hasła zamyka wszystko, jak na Vercelu', async () => {
-    const zamkniety = utworzSerwer({ katalog: path.join(katalogTestu, 'dist'), haslo: undefined });
+  it('bez kont zamyka wszystko', async () => {
+    const puste = await srodowisko([]);
+    const zamkniety = utworzSerwer({ katalog: path.join(katalogTestu, 'dist'), kontekst: puste.kontekst });
     await new Promise<void>((r) => zamkniety.listen(0, '127.0.0.1', r));
     const p = (zamkniety.address() as AddressInfo).port;
     try {
       for (const s of ['/', '/logowanie.html', '/assets/index-abc123.js']) {
         const o = await zapytaj(p, s, { naglowki: STRONA });
         expect(o.status, s).toBe(503);
-        expect(o.tresc).toContain('KALKULATOR_HASLO');
+        expect(o.tresc).toContain('nie ma jeszcze żadnego konta');
       }
     } finally {
       await new Promise((r) => zamkniety.close(r));
+      await puste.sprzataj();
     }
   });
 });

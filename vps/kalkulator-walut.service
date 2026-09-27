@@ -1,5 +1,9 @@
 # Kalkulator walut NBP — usługa systemowa na VPS.
-# Instaluje ją vps/instaluj.sh; po zmianach: sudo bash vps/aktualizuj.sh
+#
+# Pliki aplikacji i serwer przychodzą z GitHub Actions (rsync jako deploy):
+#   /srv/apps/kalkulator/                 aplikacja (dist/)
+#   /srv/apps/kalkulator-serwer/serwer.mjs serwer z logowaniem
+# Konta i klucz sesji leżą w /var/lib/kalkulator-walut, dostępne tylko dla usługi.
 
 [Unit]
 Description=Kalkulator walut NBP
@@ -10,18 +14,21 @@ After=network.target
 Type=simple
 User=kalkulator
 Group=kalkulator
-WorkingDirectory=/opt/kalkulator-walut
-ExecStart=/usr/bin/node /opt/kalkulator-walut/dist-vps/serwer.mjs
+ExecStart=/usr/bin/node /srv/apps/kalkulator-serwer/serwer.mjs
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=8080
-# Plik hasła czyta tylko root; usługa dostaje od systemd własną kopię.
-LoadCredential=haslo:/etc/kalkulator-walut/haslo
+Environment=KATALOG=/srv/apps/kalkulator
+# Katalog stanu tworzy systemd, z prawami tylko dla usługi; ścieżkę podaje
+# w zmiennej STATE_DIRECTORY.
+StateDirectory=kalkulator-walut
+StateDirectoryMode=0700
+UMask=0077
 Restart=on-failure
 RestartSec=3
 
-# Usługa potrzebuje tylko czytać własne pliki i słuchać na porcie —
-# wszystko inne jest jej odebrane, na wypadek błędu w programie.
+# Usługa potrzebuje tylko czytać pliki aplikacji, pisać do własnego katalogu
+# stanu i słuchać na porcie — wszystko inne jest jej odebrane.
 NoNewPrivileges=yes
 CapabilityBoundingSet=
 ProtectSystem=strict

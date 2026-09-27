@@ -1,18 +1,17 @@
 /**
  * Serwer kalkulatora na własnym VPS-ie.
  *
- * Na Vercelu hasło sprawdza middleware, które platforma uruchamia sama. Tu tę
- * samą rolę pełni ten plik: każde żądanie przechodzi najpierw przez `obsluz`
- * z `src/serwer/ochrona.ts` (ta sama logika co na Vercelu), a dopiero gdy ta
- * przepuści, serwer wydaje plik z katalogu `dist/`.
+ * Każde żądanie przechodzi najpierw przez `obsluz` z `ochrona.ts` — logowanie,
+ * sesje, API kont — a dopiero gdy ta przepuści, serwer wydaje plik z katalogu
+ * aplikacji (`dist/`).
  *
- * Serwer słucha tylko na 127.0.0.1 — z internetem rozmawia Caddy, który
- * dokłada HTTPS. Bez HTTPS przeglądarka nie odeśle ciasteczka logowania.
+ * Serwer słucha tylko na 127.0.0.1 — z internetem rozmawia serwer WWW przed
+ * nim, który dokłada HTTPS. Bez HTTPS przeglądarka nie odeśle ciasteczka.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { open, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { obsluz } from '../src/serwer/ochrona';
+import { type Kontekst, obsluz } from './ochrona';
 
 const TYPY: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -35,14 +34,14 @@ const NAGLOWKI_BEZPIECZENSTWA: Record<string, string> = {
   'Referrer-Policy': 'same-origin',
 };
 
-/** Formularz logowania to hasło i dwa krótkie pola — więcej to nie formularz. */
+/** Formularze logowania i kont to kilka krótkich pól — więcej to nie formularz. */
 export const LIMIT_TRESCI = 16 * 1024;
 
 export interface Opcje {
   /** Katalog ze zbudowaną aplikacją (`dist/`). */
   katalog: string;
-  /** Hasło; bez niego serwer odmawia wszystkiego, jak na Vercelu. */
-  haslo: string | undefined;
+  /** Konta i klucz sesji. */
+  kontekst: Kontekst;
 }
 
 class BladZapytania extends Error {
@@ -184,9 +183,9 @@ async function obsluzZapytanie(req: IncomingMessage, res: ServerResponse, opcje:
   }
 
   const zapytanie = naZapytanie(req, adres, await wczytajTresc(req));
-  const odpowiedz = await obsluz(zapytanie, opcje.haslo);
+  const odpowiedz = await obsluz(zapytanie, opcje.kontekst);
 
-  if (odpowiedz.headers.get('x-middleware-next') === '1') {
+  if (odpowiedz === null) {
     await wyslijPlik(req, res, korzen, new URL(zapytanie.url).pathname);
   } else {
     await wyslijOdpowiedz(res, odpowiedz, req.method === 'HEAD');

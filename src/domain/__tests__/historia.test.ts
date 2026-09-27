@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  LIMIT, UKLAD_DOMYSLNY, czyZmieniony, dopisz, opisDoSchowka, ulozHistorie, usun, uzyteWaluty,
-  wczytaj, wyczysc, zapisz, type Uklad, type Wpis,
+  LIMIT, UKLAD_DOMYSLNY, czyZmieniony, dopisz, kluczHistorii, opisDoSchowka, przejmijWspolna, ulozHistorie,
+  usun, uzyteWaluty, wczytaj, wyczysc, zapisz, type Uklad, type Wpis,
 } from '../historia';
 import type { Kurs, Przeliczenie } from '../types';
 
@@ -104,6 +104,44 @@ describe('pamięć przeglądarki', () => {
   it('nie wywraca się na niepoprawnym JSON-ie', () => {
     localStorage.setItem('kalkulator-walut-historia', '{{{');
     expect(wczytaj()).toEqual([]);
+  });
+});
+
+describe('historia osobna dla każdej osoby', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('dwie osoby na jednym komputerze nie widzą nawzajem swoich przeliczeń', () => {
+    const anny = dopisz([], przeliczenie(), 1);
+    const piotra = dopisz([], przeliczenie({ kwota: 7 }), 2);
+    zapisz(anny, kluczHistorii('anna'));
+    zapisz(piotra, kluczHistorii('piotr'));
+    expect(wczytaj(kluczHistorii('anna'))).toEqual(anny);
+    expect(wczytaj(kluczHistorii('piotr'))).toEqual(piotra);
+    wyczysc(kluczHistorii('anna'));
+    expect(wczytaj(kluczHistorii('anna'))).toEqual([]);
+    expect(wczytaj(kluczHistorii('piotr'))).toEqual(piotra);
+  });
+
+  it('bez logowania zostaje historia wspólna', () => {
+    expect(kluczHistorii(null)).toBe('kalkulator-walut-historia');
+  });
+
+  it('historia sprzed kont przechodzi na pierwszą zalogowaną osobę i znika ze wspólnej', () => {
+    const dawna = dopisz([], przeliczenie(), 1);
+    zapisz(dawna);
+    przejmijWspolna('anna');
+    przejmijWspolna('piotr');
+    expect(wczytaj(kluczHistorii('anna'))).toEqual(dawna);
+    expect(wczytaj(kluczHistorii('piotr'))).toEqual([]);
+    expect(wczytaj()).toEqual([]);
+  });
+
+  it('nie nadpisuje historii, którą osoba już ma', () => {
+    const wlasna = dopisz([], przeliczenie({ kwota: 5 }), 3);
+    zapisz(wlasna, kluczHistorii('anna'));
+    zapisz(dopisz([], przeliczenie(), 1));
+    przejmijWspolna('anna');
+    expect(wczytaj(kluczHistorii('anna'))).toEqual(wlasna);
   });
 });
 
