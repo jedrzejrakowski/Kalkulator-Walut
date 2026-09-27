@@ -38,7 +38,7 @@ describe('plik kont', () => {
   it('zapis trafia na dysk z prawami tylko dla właściciela, bez plików tymczasowych', async () => {
     s = await srodowisko();
     const [, anna] = await konta();
-    await s.magazyn.zmien((l) => dodaj(l.filter((u) => u.login !== 'anna.nowak'), { ...anna!, login: 'piotr' }, new Date()));
+    await s.magazyn.zmien((l) => dodaj(l.filter((u) => u.login !== 'anna.nowak'), { ...anna!, login: 'piotr' }));
     const plik = s.magazyn.plik;
     expect(((await stat(plik)).mode & 0o777).toString(8)).toBe('600');
     expect(await readdir(path.dirname(plik))).toEqual(['uzytkownicy.json']);
@@ -61,7 +61,7 @@ describe('plik kont', () => {
     s = await srodowisko();
     const [, anna] = await konta();
     await Promise.all(
-      ['a1', 'a2', 'a3', 'a4', 'a5'].map((login) => s.magazyn.zmien((l) => dodaj(l, { ...anna!, login }, new Date()))),
+      ['a1', 'a2', 'a3', 'a4', 'a5'].map((login) => s.magazyn.zmien((l) => dodaj(l, { ...anna!, login }))),
     );
     expect((await new Magazyn(s.magazyn.plik).wszyscy()).length).toBe(7);
   });
@@ -72,7 +72,7 @@ describe('plik kont', () => {
       throw new Error('przerwane');
     })).rejects.toThrow('przerwane');
     const [, anna] = await konta();
-    await s.magazyn.zmien((l) => dodaj(l, { ...anna!, login: 'po.bledzie' }, new Date()));
+    await s.magazyn.zmien((l) => dodaj(l, { ...anna!, login: 'po.bledzie' }));
     expect((await new Magazyn(s.magazyn.plik).wszyscy()).length).toBe(3);
   });
 
@@ -80,6 +80,18 @@ describe('plik kont', () => {
     s = await srodowisko();
     await writeFile(s.magazyn.plik, JSON.stringify({ uzytkownicy: [{ login: 'x', haslo: 'jawne' }] }));
     await expect(new Magazyn(s.magazyn.plik).wszyscy()).rejects.toThrow('uszkodzony');
+  });
+
+  it('pola spoza modelu (np. imię z ręcznej edycji) nie przechodzą dalej ani nie wracają na dysk', async () => {
+    s = await srodowisko();
+    const [admin] = await konta();
+    await writeFile(s.magazyn.plik, JSON.stringify({ uzytkownicy: [{ ...admin, nazwa: 'Jan Kowalski', email: 'jan@example.com' }] }));
+    const m = new Magazyn(s.magazyn.plik);
+    expect(Object.keys((await m.wszyscy())[0]!).sort()).toEqual(['admin', 'haslo', 'login', 'wymagaZmiany']);
+    await m.zmien((l) => [...l]);
+    const naDysku = await readFile(s.magazyn.plik, 'utf8');
+    expect(naDysku).not.toContain('Kowalski');
+    expect(naDysku).not.toContain('example.com');
   });
 
   it('brak pliku to brak kont', async () => {

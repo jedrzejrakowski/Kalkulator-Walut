@@ -37,11 +37,8 @@ export function OknoKonta({ otwarty, konto, onZmianaKonta, onZamknij }: Props) {
       <div className="ustawienia__tresc ustawienia__tresc--konto">
         <section className="konto__kto">
           <span className="konto__dane">
-            <strong>{konto.nazwa || konto.login}</strong>
-            <span>
-              {konto.nazwa ? `${konto.login} · ` : ''}
-              {konto.admin ? 'administrator' : 'użytkownik'}
-            </span>
+            <strong>{konto.login}</strong>
+            <span>{konto.admin ? 'administrator' : 'użytkownik'}</span>
           </span>
           <button type="button" className="konto__przycisk-wyloguj" onClick={() => void wyloguj()}>
             Wyloguj

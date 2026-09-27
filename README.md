@@ -255,14 +255,18 @@ sprawdzane w samej przeglądarce dałoby się obejść w minutę.
 
 **Konta.** Pierwsze konto administratora zakłada się na serwerze:
 `sudo bash vps/admin.sh <identyfikator>`. Kolejne osoby dodaje już
-administrator w aplikacji, na ekranie „Użytkownicy”: identyfikator, imię i
-nazwisko, hasło startowe (losowane), ewentualnie uprawnienia administratora.
+administrator w aplikacji, na ekranie „Użytkownicy”: identyfikator, hasło
+startowe (losowane), ewentualnie uprawnienia administratora.
 Hasło startowe widać tylko raz, przy nadaniu — przy pierwszym logowaniu trzeba
 je zmienić na własne; do tego czasu aplikacja pokazuje tylko ekran zmiany hasła,
 a serwer odmawia wszelkich czynności na kontach.
 Administrator może też nadać nowe hasło startowe, zmienić uprawnienia i usunąć
 konto; zawsze zostaje przynajmniej jeden administrator i nikt nie usunie sam
 siebie. Każdy zmienia własne hasło w oknie „Konto” (przycisk na dole paska).
+
+**Bez danych osobowych.** Konto to identyfikator, skrót hasła i uprawnienia —
+żadnych imion, nazwisk, adresów ani dat. Identyfikator nie musi wskazywać osoby
+(np. `biuro2`). Serwer nie prowadzi dziennika logowań.
 
 **Hasła.** Serwer trzyma tylko skróty scrypt z losową solą (32 MiB pamięci na
 sprawdzenie, zgodnie z OWASP), w pliku `/var/lib/kalkulator-walut/uzytkownicy.json`

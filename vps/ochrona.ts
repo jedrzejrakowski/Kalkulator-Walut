@@ -19,11 +19,10 @@ import {
   skrotZastepczy,
   sprawdzHasloNowe,
   sprawdzLogin,
-  sprawdzNazwe,
   ustawHaslo,
+  ustawUprawnienia,
   usun,
   type Uzytkownik,
-  zmienDane,
 } from './uzytkownicy';
 
 export const CIASTKO_SESJI = 'kw_sesja';
@@ -229,7 +228,7 @@ async function api(zapytanie: Request, sciezka: string, sesja: Sesja, k: Konteks
     sprawdzHasloNowe(nowe, ja.login);
     if (nowe === stare) throw new BladKonta(400, 'Nowe hasło musi być inne niż obecne.');
     const skrot = await skrotHasla(nowe);
-    const lista = await k.magazyn.zmien((l) => ustawHaslo(l, ja.login, skrot, false, new Date(teraz)));
+    const lista = await k.magazyn.zmien((l) => ustawHaslo(l, ja.login, skrot, false));
     const po = lista.find((u) => u.login === ja.login)!;
     // Nowe hasło unieważnia stare sesje — także tę, więc wydajemy nową z tym
     // samym terminem. Długi termin oznacza, że było „zapamiętaj".
@@ -247,12 +246,11 @@ async function api(zapytanie: Request, sciezka: string, sesja: Sesja, k: Konteks
       const dane = await czytajJson(zapytanie);
       const login = normalizujLogin(napis(dane.login));
       sprawdzLogin(login);
-      const nazwa = sprawdzNazwe(napis(dane.nazwa));
       const haslo = napis(dane.haslo);
       sprawdzHasloNowe(haslo, login);
       const skrot = await skrotHasla(haslo);
-      const nowy = { login, nazwa, admin: dane.admin === true, haslo: skrot, wymagaZmiany: true };
-      const lista = await k.magazyn.zmien((l) => dodaj(l, nowy, new Date(teraz)));
+      const nowy = { login, admin: dane.admin === true, haslo: skrot, wymagaZmiany: true };
+      const lista = await k.magazyn.zmien((l) => dodaj(l, nowy));
       return json(opis(lista.find((u) => u.login === login)!), 201);
     }
   }
@@ -266,15 +264,14 @@ async function api(zapytanie: Request, sciezka: string, sesja: Sesja, k: Konteks
       const haslo = napis(dane.haslo);
       sprawdzHasloNowe(haslo, login);
       const skrot = await skrotHasla(haslo);
-      const lista = await k.magazyn.zmien((l) => ustawHaslo(l, login, skrot, true, new Date(teraz)));
+      const lista = await k.magazyn.zmien((l) => ustawHaslo(l, login, skrot, true));
       return json(opis(lista.find((u) => u.login === login)!));
     }
     if (!m[2] && metoda === 'PATCH') {
       const dane = await czytajJson(zapytanie);
-      const zmiany: { nazwa?: string; admin?: boolean } = {};
-      if ('nazwa' in dane) zmiany.nazwa = sprawdzNazwe(napis(dane.nazwa));
-      if (typeof dane.admin === 'boolean') zmiany.admin = dane.admin;
-      const lista = await k.magazyn.zmien((l) => zmienDane(l, login, zmiany, ja.login));
+      if (typeof dane.admin !== 'boolean') throw new BladKonta(400, 'Nieprawidłowe dane.');
+      const admin = dane.admin;
+      const lista = await k.magazyn.zmien((l) => ustawUprawnienia(l, login, admin, ja.login));
       return json(opis(lista.find((u) => u.login === login)!));
     }
     if (!m[2] && metoda === 'DELETE') {

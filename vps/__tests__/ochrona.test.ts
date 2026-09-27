@@ -193,8 +193,7 @@ describe('API', () => {
     const o = (await obsluz(api('GET', '/api/ja', sesja), s.kontekst))!;
     expect(o.status).toBe(200);
     const ja = (await o.json()) as Record<string, unknown>;
-    expect(ja).toMatchObject({ login: 'anna.nowak', nazwa: 'Anna Nowak', admin: false, wymagaZmiany: false });
-    expect(ja).not.toHaveProperty('haslo');
+    expect(ja).toEqual({ login: 'anna.nowak', admin: false, wymagaZmiany: false });
   });
 
   it('zwykły użytkownik nie ma dostępu do listy kont', async () => {
@@ -281,11 +280,11 @@ describe('panel administratora', () => {
   it('dodaje konto z hasłem startowym; nowa osoba loguje się i musi je zmienić', async () => {
     s = await srodowisko();
     const sesja = await zalogowany('jedrzej', HASLO_ADMINA);
-    const o = (await obsluz(api('POST', '/api/uzytkownicy', sesja, { login: ' Piotr.K ', nazwa: '  Piotr   Kowalski ', haslo: 'startowe-haslo-piotra', admin: false }), s.kontekst))!;
+    const o = (await obsluz(api('POST', '/api/uzytkownicy', sesja, { login: ' Biuro2 ', haslo: 'startowe-haslo-biura', admin: false }), s.kontekst))!;
     expect(o.status).toBe(201);
-    expect(await o.json()).toMatchObject({ login: 'piotr.k', nazwa: 'Piotr Kowalski', admin: false, wymagaZmiany: true });
+    expect(await o.json()).toEqual({ login: 'biuro2', admin: false, wymagaZmiany: true });
 
-    const jego = await zalogowany('piotr.k', 'startowe-haslo-piotra');
+    const jego = await zalogowany('biuro2', 'startowe-haslo-biura');
     const ja = (await (await obsluz(api('GET', '/api/ja', jego), s.kontekst))!.json()) as { wymagaZmiany: boolean };
     expect(ja.wymagaZmiany).toBe(true);
   });
@@ -298,7 +297,6 @@ describe('panel administratora', () => {
       [{ login: 'jan kowalski', haslo: 'dlugie-haslo-testowe' }, 400],
       [{ login: '-jan', haslo: 'dlugie-haslo-testowe' }, 400],
       [{ login: 'jan', haslo: 'krotkie' }, 400],
-      [{ login: 'jan', haslo: 'dlugie-haslo-testowe', nazwa: 'a'.repeat(81) }, 400],
       [{ login: 'Anna.Nowak', haslo: 'dlugie-haslo-testowe' }, 409],
       ['nie obiekt', 400],
     ];
@@ -332,8 +330,9 @@ describe('panel administratora', () => {
     expect((await obsluz(api('DELETE', '/api/uzytkownicy/jedrzej', admin), s.kontekst))!.status).toBe(400);
     expect((await obsluz(api('DELETE', '/api/uzytkownicy/nikt', admin), s.kontekst))!.status).toBe(404);
 
-    const awans = await zmien('anna.nowak', { admin: true, nazwa: 'Anna Nowak-Kowalska' });
-    expect(await awans!.json()).toMatchObject({ admin: true, nazwa: 'Anna Nowak-Kowalska' });
+    expect((await zmien('anna.nowak', { nazwa: 'Anna' }))!.status).toBe(400);
+    const awans = await zmien('anna.nowak', { admin: true });
+    expect(await awans!.json()).toEqual({ login: 'anna.nowak', admin: true, wymagaZmiany: false });
     // Uprawnienia działają od razu, bez ponownego logowania.
     expect((await obsluz(api('GET', '/api/uzytkownicy', anny), s.kontekst))!.status).toBe(200);
 

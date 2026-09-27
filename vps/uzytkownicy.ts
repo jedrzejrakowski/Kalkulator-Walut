@@ -1,6 +1,9 @@
 /**
  * Konta użytkowników: zasady, skróty haseł i plik, w którym leżą.
  *
+ * Konto to tylko identyfikator, skrót hasła i uprawnienia — żadnych imion,
+ * nazwisk ani dat. Program nie przechowuje danych osobowych.
+ *
  * Hasło nigdy nie jest zapisywane — tylko jego skrót scrypt z losową solą.
  * scrypt celowo zużywa pamięć i czas procesora, więc nawet ktoś, kto
  * wyniósłby plik z serwera, musiałby zgadywać każde hasło osobno i powoli.
@@ -11,15 +14,11 @@ import { readFile, rename, stat, writeFile } from 'node:fs/promises';
 export interface Uzytkownik {
   /** Identyfikator do logowania: małe litery, cyfry, kropka, myślnik, podkreślnik. */
   login: string;
-  /** Imię i nazwisko do wyświetlenia; może być puste. */
-  nazwa: string;
   admin: boolean;
   /** Skrót hasła: `scrypt$N$r$p$sól$skrót`. */
   haslo: string;
   /** Hasło nadał administrator — przy pierwszym wejściu trzeba ustawić własne. */
   wymagaZmiany: boolean;
-  utworzono: string;
-  zmianaHasla: string;
 }
 
 /** To, co wolno pokazać w przeglądarce — bez skrótu hasła. */
@@ -31,7 +30,6 @@ export function opis({ haslo: _pominiete, ...reszta }: Uzytkownik): OpisUzytkown
 
 export const NAJKROTSZE_HASLO = 12;
 const NAJDLUZSZE_HASLO = 200;
-const NAJDLUZSZA_NAZWA = 80;
 const WZOR_LOGINU = /^[a-z0-9][a-z0-9._-]{1,31}$/;
 
 /** Błąd, który można pokazać użytkownikowi wprost — z kodem odpowiedzi HTTP. */
@@ -63,15 +61,6 @@ export function sprawdzHasloNowe(haslo: string, login: string): void {
   }
   if (haslo.length > NAJDLUZSZE_HASLO) throw new BladKonta(400, 'Hasło jest za długie.');
   if (haslo.toLowerCase().includes(login)) throw new BladKonta(400, 'Hasło nie może zawierać identyfikatora.');
-}
-
-export function sprawdzNazwe(nazwa: string): string {
-  const czysta = nazwa.trim().replace(/\s+/g, ' ');
-  // Znaki sterujące nie mają czego szukać w imieniu i nazwisku.
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f\u007f]/.test(czysta)) throw new BladKonta(400, 'Imię i nazwisko zawiera niedozwolone znaki.');
-  if ([...czysta].length > NAJDLUZSZA_NAZWA) throw new BladKonta(400, 'Imię i nazwisko jest za długie.');
-  return czysta;
 }
 
 // --- skróty haseł ---
@@ -176,42 +165,25 @@ function ileAdminow(lista: readonly Uzytkownik[]): number {
   return lista.filter((u) => u.admin).length;
 }
 
-export function dodaj(
-  lista: readonly Uzytkownik[],
-  nowy: { login: string; nazwa: string; admin: boolean; haslo: string; wymagaZmiany: boolean },
-  teraz: Date,
-): Uzytkownik[] {
+export function dodaj(lista: readonly Uzytkownik[], nowy: Uzytkownik): Uzytkownik[] {
   if (lista.some((u) => u.login === nowy.login)) {
     throw new BladKonta(409, `Identyfikator „${nowy.login}" jest już zajęty.`);
   }
-  const czas = teraz.toISOString();
-  return [...lista, { ...nowy, utworzono: czas, zmianaHasla: czas }];
+  return [...lista, nowy];
 }
 
-export function ustawHaslo(
-  lista: readonly Uzytkownik[],
-  login: string,
-  skrot: string,
-  wymagaZmiany: boolean,
-  teraz: Date,
-): Uzytkownik[] {
+export function ustawHaslo(lista: readonly Uzytkownik[], login: string, skrot: string, wymagaZmiany: boolean): Uzytkownik[] {
   const i = znajdzIndeks(lista, login);
-  return lista.map((u, j) => (j === i ? { ...u, haslo: skrot, wymagaZmiany, zmianaHasla: teraz.toISOString() } : u));
+  return lista.map((u, j) => (j === i ? { ...u, haslo: skrot, wymagaZmiany } : u));
 }
 
-export function zmienDane(
-  lista: readonly Uzytkownik[],
-  login: string,
-  zmiany: { nazwa?: string; admin?: boolean },
-  kto: string,
-): Uzytkownik[] {
+export function ustawUprawnienia(lista: readonly Uzytkownik[], login: string, admin: boolean, kto: string): Uzytkownik[] {
   const i = znajdzIndeks(lista, login);
-  const obecny = lista[i]!;
-  if (zmiany.admin === false && obecny.admin) {
+  if (!admin && lista[i]!.admin) {
     if (login === kto) throw new BladKonta(400, 'Nie możesz odebrać uprawnień administratora samemu sobie.');
     if (ileAdminow(lista) <= 1) throw new BladKonta(400, 'Musi zostać przynajmniej jeden administrator.');
   }
-  return lista.map((u, j) => (j === i ? { ...u, ...zmiany } : u));
+  return lista.map((u, j) => (j === i ? { ...u, admin } : u));
 }
 
 export function usun(lista: readonly Uzytkownik[], login: string, kto: string): Uzytkownik[] {
@@ -228,12 +200,9 @@ function poprawny(k: unknown): k is Uzytkownik {
   const u = k as Record<string, unknown>;
   return (
     typeof u.login === 'string' && WZOR_LOGINU.test(u.login) &&
-    typeof u.nazwa === 'string' &&
     typeof u.admin === 'boolean' &&
     typeof u.haslo === 'string' && u.haslo.startsWith('scrypt$') &&
-    typeof u.wymagaZmiany === 'boolean' &&
-    typeof u.utworzono === 'string' &&
-    typeof u.zmianaHasla === 'string'
+    typeof u.wymagaZmiany === 'boolean'
   );
 }
 
@@ -267,7 +236,8 @@ export class Magazyn {
     if (!Array.isArray(surowe) || !surowe.every(poprawny)) {
       throw new Error(`Plik kont ${this.plik} jest uszkodzony.`);
     }
-    this.lista = surowe;
+    // Tylko znane pola — nic więcej nie trafi dalej ani z powrotem na dysk.
+    this.lista = surowe.map(({ login, admin, haslo, wymagaZmiany }) => ({ login, admin, haslo, wymagaZmiany }));
     this.wersjaPliku = wersja;
   }
 

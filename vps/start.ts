@@ -3,7 +3,7 @@
  *
  *   node serwer.mjs                 serwer
  *   node serwer.mjs admin <login>   załóż administratora albo nadaj mu nowe hasło
- *                                   (hasło w zmiennej NOWE_HASLO, imię w NAZWA)
+ *                                   (hasło w zmiennej NOWE_HASLO)
  *   node serwer.mjs lista           konta
  *
  * Polecenie `admin` to też droga ratunkowa, gdy administrator zapomni hasła.
@@ -23,9 +23,8 @@ import {
   skrotHasla,
   sprawdzHasloNowe,
   sprawdzLogin,
-  sprawdzNazwe,
   ustawHaslo,
-  zmienDane,
+  ustawUprawnienia,
 } from './uzytkownicy';
 
 const stan = process.env.STATE_DIRECTORY?.split(':')[0] ?? process.env.STAN ?? path.resolve('stan');
@@ -50,15 +49,12 @@ async function admin(surowy: string | undefined): Promise<void> {
   sprawdzLogin(login);
   const haslo = process.env.NOWE_HASLO ?? '';
   sprawdzHasloNowe(haslo, login);
-  const nazwa = sprawdzNazwe(process.env.NAZWA ?? '');
   const skrot = await skrotHasla(haslo);
-  const teraz = new Date();
   let bylo = false;
   await magazyn.zmien((lista) => {
     bylo = lista.some((u) => u.login === login);
-    if (!bylo) return dodaj(lista, { login, nazwa, admin: true, haslo: skrot, wymagaZmiany: false }, teraz);
-    const zHaslem = ustawHaslo(lista, login, skrot, false, teraz);
-    return zmienDane(zHaslem, login, nazwa ? { admin: true, nazwa } : { admin: true }, '');
+    if (!bylo) return dodaj(lista, { login, admin: true, haslo: skrot, wymagaZmiany: false });
+    return ustawUprawnienia(ustawHaslo(lista, login, skrot, false), login, true, '');
   });
   console.log(bylo ? `Konto ${login}: nowe hasło, uprawnienia administratora.` : `Założono administratora ${login}.`);
 }
@@ -69,7 +65,7 @@ async function lista(): Promise<void> {
   for (const u of konta) {
     const rola = u.admin ? 'administrator' : 'użytkownik';
     const haslo = u.wymagaZmiany ? ', hasło startowe' : '';
-    console.log(`${u.login.padEnd(20)} ${rola}${haslo}${u.nazwa ? ` — ${u.nazwa}` : ''}`);
+    console.log(`${u.login.padEnd(20)} ${rola}${haslo}`);
   }
 }
 

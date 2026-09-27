@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   BladSesji,
-  dataKonta,
   dodajKonto,
   listaKont,
   nadajHaslo,
   NAJKROTSZE_HASLO,
   usunKonto,
+  ustawAdmina,
   wygenerujHaslo,
-  zmienKonto,
   type Konto,
 } from '../domain/konta';
 
@@ -39,7 +38,6 @@ export function EkranUzytkownikow({ ja, onBladSesji }: Props) {
   const [zajety, setZajety] = useState(false);
 
   const [login, setLogin] = useState('');
-  const [nazwa, setNazwa] = useState('');
   const [haslo, setHaslo] = useState(() => wygenerujHaslo());
   const [admin, setAdmin] = useState(false);
 
@@ -74,10 +72,9 @@ export function EkranUzytkownikow({ ja, onBladSesji }: Props) {
   function dodaj(e: FormEvent) {
     e.preventDefault();
     void wykonaj(async () => {
-      const nowe = await dodajKonto({ login, nazwa, haslo, admin });
+      const nowe = await dodajKonto({ login, haslo, admin });
       pokazHaslo({ login: nowe.login, haslo, nowe: true });
       setLogin('');
-      setNazwa('');
       setAdmin(false);
       setHaslo(wygenerujHaslo());
     });
@@ -144,15 +141,12 @@ export function EkranUzytkownikow({ ja, onBladSesji }: Props) {
               required
               value={login}
               onChange={(e) => setLogin(e.target.value.toLowerCase())}
-              placeholder="np. anna.nowak"
+              placeholder="np. biuro2"
               autoComplete="off"
               spellCheck={false}
               maxLength={32}
             />
-          </label>
-          <label className="field">
-            <span className="field-label">Imię i nazwisko</span>
-            <input type="text" value={nazwa} onChange={(e) => setNazwa(e.target.value)} placeholder="np. Anna Nowak" autoComplete="off" maxLength={80} />
+            <span className="field-hint">Nie musi zawierać imienia — wystarczy np. biuro2 albo stanowisko3.</span>
           </label>
           <label className="field">
             <span className="field-label">Hasło startowe</span>
@@ -183,10 +177,8 @@ export function EkranUzytkownikow({ ja, onBladSesji }: Props) {
             <thead>
               <tr>
                 <th scope="col">Identyfikator</th>
-                <th scope="col">Imię i nazwisko</th>
                 <th scope="col">Rola</th>
                 <th scope="col">Hasło</th>
-                <th scope="col">Założone</th>
                 <th scope="col">
                   <span className="sr-only">Działania</span>
                 </th>
@@ -204,14 +196,12 @@ export function EkranUzytkownikow({ ja, onBladSesji }: Props) {
                         {to ? <span className="uzytkownicy__ty"> (Ty)</span> : null}
                       </span>
                     </td>
-                    <td data-etykieta="Osoba">{k.nazwa || '—'}</td>
                     <td data-etykieta="Rola">
                       {k.admin ? <span className="uzytkownicy__rola">administrator</span> : 'użytkownik'}
                     </td>
                     <td data-etykieta="Hasło">
-                      {k.wymagaZmiany ? <span className="uzytkownicy__startowe">startowe, do zmiany</span> : `ustawione ${dataKonta(k.zmianaHasla)}`}
+                      {k.wymagaZmiany ? <span className="uzytkownicy__startowe">startowe, do zmiany</span> : 'własne'}
                     </td>
-                    <td data-etykieta="Założone">{dataKonta(k.utworzono)}</td>
                     <td className="historia__prawa">
                       {to ? (
                         <span className="field-hint uzytkownicy__swoje">Swoje hasło zmieniasz w oknie „Konto”.</span>
@@ -239,7 +229,7 @@ export function EkranUzytkownikow({ ja, onBladSesji }: Props) {
                             type="button"
                             className="link"
                             disabled={zajety}
-                            onClick={() => void wykonaj(async () => void (await zmienKonto(k.login, { admin: !k.admin })))}
+                            onClick={() => void wykonaj(async () => void (await ustawAdmina(k.login, !k.admin)))}
                           >
                             {k.admin ? 'Odbierz admina' : 'Nadaj admina'}
                           </button>

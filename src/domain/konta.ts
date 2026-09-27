@@ -8,14 +8,12 @@
  */
 import { NAGLOWEK_API } from './sesja';
 
+/** Konto to tylko identyfikator i uprawnienia — bez danych osobowych. */
 export interface Konto {
   login: string;
-  nazwa: string;
   admin: boolean;
   /** Hasło nadał administrator — trzeba ustawić własne. */
   wymagaZmiany: boolean;
-  utworzono: string;
-  zmianaHasla: string;
 }
 
 /** Sesja wygasła albo konto usunięto — trzeba zalogować się od nowa. */
@@ -50,12 +48,12 @@ export const pobierzJa = () => zapytaj<Konto>('GET', '/api/ja');
 export const zmienWlasneHaslo = (stare: string, nowe: string) => zapytaj<Konto>('POST', '/api/haslo', { stare, nowe });
 
 export const listaKont = () => zapytaj<Konto[]>('GET', '/api/uzytkownicy');
-export const dodajKonto = (dane: { login: string; nazwa: string; haslo: string; admin: boolean }) =>
+export const dodajKonto = (dane: { login: string; haslo: string; admin: boolean }) =>
   zapytaj<Konto>('POST', '/api/uzytkownicy', dane);
 export const nadajHaslo = (login: string, haslo: string) =>
   zapytaj<Konto>('POST', `/api/uzytkownicy/${encodeURIComponent(login)}/haslo`, { haslo });
-export const zmienKonto = (login: string, zmiany: { nazwa?: string; admin?: boolean }) =>
-  zapytaj<Konto>('PATCH', `/api/uzytkownicy/${encodeURIComponent(login)}`, zmiany);
+export const ustawAdmina = (login: string, admin: boolean) =>
+  zapytaj<Konto>('PATCH', `/api/uzytkownicy/${encodeURIComponent(login)}`, { admin });
 export const usunKonto = (login: string) => zapytaj<void>('DELETE', `/api/uzytkownicy/${encodeURIComponent(login)}`);
 
 /** Musi się zgadzać z serwerem — sprawdza to test. */
@@ -77,11 +75,4 @@ export function wygenerujHaslo(losuj: (n: number) => Uint32Array = (n) => crypto
     wynik += ZNAKI[liczby[i]! % ZNAKI.length];
   }
   return wynik;
-}
-
-/** Data ISO po polsku, np. „27.09.2026". */
-export function dataKonta(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }

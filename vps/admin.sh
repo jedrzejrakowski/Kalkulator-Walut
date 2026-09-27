@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Konto administratora: założenie albo nowe hasło.
 #
-#   sudo bash admin.sh <identyfikator> ["Imię i nazwisko"]
+#   sudo bash admin.sh <identyfikator>
 #
 # Pierwsze konto zakłada się tym poleceniem na serwerze; kolejne osoby dodaje
 # już administrator w aplikacji (ekran „Użytkownicy"). To samo polecenie
@@ -21,9 +21,8 @@ fi
 
 login="${1:-}"
 if [ -z "$login" ]; then
-  read -rp "Identyfikator administratora (np. jedrzej): " login </dev/tty
+  read -rp "Identyfikator administratora (np. admin): " login </dev/tty
 fi
-nazwa="${2:-}"
 
 if [ -n "${NOWE_HASLO:-}" ]; then
   haslo="$NOWE_HASLO"
@@ -48,6 +47,6 @@ fi
 install -d -m 700 -o "$KONTO_USLUGI" -g "$KONTO_USLUGI" "$STAN"
 # Hasło idzie w zmiennej środowiskowej, nie w argumentach — tych nie widać
 # na liście procesów innych użytkowników.
-export NOWE_HASLO="$haslo" NAZWA="$nazwa" STAN
+export NOWE_HASLO="$haslo" STAN
 unset haslo
 runuser -u "$KONTO_USLUGI" -- /usr/bin/node "$SERWER" admin "$login"

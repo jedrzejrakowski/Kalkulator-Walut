@@ -18,10 +18,9 @@ export function gotoweSkroty(): Promise<[string, string]> {
 
 export async function konta(): Promise<Uzytkownik[]> {
   const [admin, anna] = await gotoweSkroty();
-  const czas = '2026-09-27T10:00:00.000Z';
   return [
-    { login: 'jedrzej', nazwa: 'Jędrzej Rakowski', admin: true, haslo: admin, wymagaZmiany: false, utworzono: czas, zmianaHasla: czas },
-    { login: 'anna.nowak', nazwa: 'Anna Nowak', admin: false, haslo: anna, wymagaZmiany: false, utworzono: czas, zmianaHasla: czas },
+    { login: 'jedrzej', admin: true, haslo: admin, wymagaZmiany: false },
+    { login: 'anna.nowak', admin: false, haslo: anna, wymagaZmiany: false },
   ];
 }
 
