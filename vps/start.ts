@@ -11,6 +11,7 @@
  * STATE_DIRECTORY, a przy próbach na własnym komputerze — zmienna STAN.
  */
 import { randomBytes } from 'node:crypto';
+import { watchFile } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -83,8 +84,20 @@ async function serwer(): Promise<void> {
   s.listen(port, host, () => {
     console.log(`Kalkulator walut: http://${host}:${port}, pliki z ${katalog}, konta w ${magazyn.plik}`);
   });
-  for (const sygnal of ['SIGTERM', 'SIGINT'] as const) {
-    process.on(sygnal, () => s.close(() => process.exit(0)));
+  const zakoncz = () => s.close(() => process.exit(0));
+  for (const sygnal of ['SIGTERM', 'SIGINT'] as const) process.on(sygnal, zakoncz);
+
+  // Nową wersję wgrywa GitHub Actions jako użytkownik bez prawa do
+  // restartu usług. Serwer sam zauważa podmianę swojego pliku i kończy
+  // pracę, a Docker (restart: unless-stopped) uruchamia go od nowa.
+  if (process.env.KONIEC_PRZY_ZMIANIE === '1') {
+    const plik = fileURLToPath(import.meta.url);
+    watchFile(plik, { interval: 3000 }, (teraz, przedtem) => {
+      if (teraz.mtimeMs !== przedtem.mtimeMs || teraz.ino !== przedtem.ino) {
+        console.log('Nowa wersja serwera — uruchamiam ponownie.');
+        zakoncz();
+      }
+    });
   }
 }
 

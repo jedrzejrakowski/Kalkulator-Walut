@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1111 # polskie cudzysłowy w komunikatach są zamierzone
 # Odczyt konfiguracji serwera — niczego nie zmienia.
 #
 #   curl -fsSL https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/diagnostyka.sh | sudo bash
@@ -53,6 +54,9 @@ if command -v docker >/dev/null; then
   docker ps -q 2>/dev/null | xargs -r docker inspect --format '{{.Name}} → {{index .Config.Labels "com.docker.compose.project.working_dir"}} ({{index .Config.Labels "com.docker.compose.project.config_files"}})' 2>/dev/null | sort -u
   naglowek "Docker: montowane katalogi z /srv i /opt"
   docker ps -q 2>/dev/null | xargs -r docker inspect --format '{{.Name}}{{range .Mounts}} | {{.Source}} → {{.Destination}}{{end}}' 2>/dev/null | grep -E '/srv|/opt|/var/www' || echo "(brak)"
+  naglowek "Docker: Caddyfile podpięte do kontenerów (bez sekretów)"
+  docker ps -q 2>/dev/null | xargs -r docker inspect --format '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{"\n"}}{{end}}{{end}}' 2>/dev/null |
+    sort -u | while read -r plik; do [ -n "$plik" ] && pokaz_plik "$plik"; done
   naglowek "Docker: pliki compose (bez sekretów)"
   docker ps -q 2>/dev/null | xargs -r docker inspect --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}' 2>/dev/null |
     tr ',' '\n' | sort -u | while read -r plik; do pokaz_plik "$plik"; done
