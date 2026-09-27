@@ -253,8 +253,9 @@ identyfikatorem i hasłem. Sprawdza to serwer, zanim wyda jakikolwiek plik
 aplikacji — bez ważnej sesji nie ma ani strony, ani skryptów. Logowanie
 sprawdzane w samej przeglądarce dałoby się obejść w minutę.
 
-**Konta.** Pierwsze konto administratora zakłada się na serwerze:
-`sudo bash vps/admin.sh <identyfikator>`. Kolejne osoby dodaje już
+**Konta.** Pierwsze konto administratora zakłada instalator na serwerze
+(później, np. po zapomnianym haśle: `bash /opt/kalkulator/admin.sh <identyfikator>`).
+Kolejne osoby dodaje już
 administrator w aplikacji, na ekranie „Użytkownicy”: identyfikator, hasło
 startowe (losowane), ewentualnie uprawnienia administratora.
 Hasło startowe widać tylko raz, przy nadaniu — przy pierwszym logowaniu trzeba
@@ -269,8 +270,8 @@ siebie. Każdy zmienia własne hasło w oknie „Konto” (przycisk na dole pask
 (np. `biuro2`). Serwer nie prowadzi dziennika logowań.
 
 **Hasła.** Serwer trzyma tylko skróty scrypt z losową solą (32 MiB pamięci na
-sprawdzenie, zgodnie z OWASP), w pliku `/var/lib/kalkulator-walut/uzytkownicy.json`
-dostępnym wyłącznie dla usługi. Hasło musi mieć co najmniej 12 znaków i nie
+sprawdzenie, zgodnie z OWASP), w pliku `uzytkownicy.json` w wolumenie Dockera
+dostępnym wyłącznie dla kontenera kalkulatora. Hasło musi mieć co najmniej 12 znaków i nie
 może zawierać identyfikatora. Po złym haśle serwer odczekuje chwilę; nieistniejące
 konto sprawdza tak samo długo jak istniejące, żeby odpowiedź nie zdradzała, które
 identyfikatory są w użyciu. Najwyżej dwa sprawdzenia hasła naraz — zasypanie
@@ -296,31 +297,54 @@ przeglądarka pobiera bez ciasteczek. Zapytania do API muszą nieść nagłówek
 
 ## Serwer (VPS)
 
-Kalkulator działa jako mała usługa Node.js (`vps/serwer.ts`) na 127.0.0.1;
-z internetem rozmawia serwer WWW przed nią, który dokłada HTTPS — bez HTTPS
-przeglądarka nie odeśle ciasteczka logowania.
+Na serwerze strony wystawia Caddy w Dockerze (`/opt/caddy`), obok n8n.
+Kalkulator działa jako osobny kontener `kalkulator` (Node.js, `vps/serwer.ts`)
+w tej samej sieci `web`; Caddy kieruje do niego stronę kalkulatora i dokłada
+HTTPS — bez HTTPS przeglądarka nie odeśle ciasteczka logowania.
 
-GitHub Actions po każdej zmianie na `main` buduje aplikację i serwer, a potem
-wysyła je na VPS jako użytkownik `deploy`: aplikację do `/srv/apps/kalkulator/`,
-serwer do `/srv/apps/kalkulator-serwer/serwer.mjs`.
+```
+przeglądarka ──https──▶ Caddy ──▶ kontener kalkulator:8080 ──▶ /srv/apps/kalkulator (aplikacja)
+                                        │
+                                        └── wolumen kalkulator_stan (konta, klucz sesji)
+```
+
+**Wdrażanie.** GitHub Actions po każdej zmianie na `main` buduje aplikację i
+serwer, a potem wysyła je jako `deploy`: aplikację do `/srv/apps/kalkulator/`,
+serwer do `/srv/apps/kalkulator-serwer/`. Serwer sam zauważa podmianę swojego
+pliku i kończy pracę, a Docker uruchamia go od nowa — `deploy` nie potrzebuje
+żadnych uprawnień administratora. Sesje przeżywają wdrożenie.
+
+**Instalacja** (jednorazowo, jako root, gdy GitHub wgra już wersję z logowaniem):
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/instaluj.sh
+bash instaluj.sh
+```
+
+Skrypt zapisuje `/opt/kalkulator/docker-compose.yml`, uruchamia kontener, pyta
+o identyfikator i hasło pierwszego administratora, a w `/opt/caddy/Caddyfile`
+zamienia w bloku kalkulatora `root` + `file_server` na
+`reverse_proxy kalkulator:8080` (`vps/caddyfile.py`). Przed zmianą robi kopię,
+sprawdza nową konfigurację osobnym Caddy i przeładowuje; gdyby Caddy jej nie
+przyjął — przywraca kopię. Nietypowego układu (kalkulator pod ścieżką,
+w kilku blokach) nie rusza wcale. Można go uruchomić ponownie.
+
+Kontener działa na koncie bez uprawnień, z systemem plików tylko do odczytu,
+bez portów wystawionych na zewnątrz i z limitem pamięci. Konta leżą
+w wolumenie Dockera, poza `/srv/apps` — Filebrowser ich nie widzi.
 
 | Co | Polecenie |
 |---|---|
-| Odczyt konfiguracji serwera (niczego nie zmienia) | `curl -fsSL https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/diagnostyka.sh \| sudo bash` |
-| Założenie administratora albo nowe hasło dla niego | `sudo bash vps/admin.sh <identyfikator>` |
-| Lista kont | `sudo -u kalkulator STAN=/var/lib/kalkulator-walut node /srv/apps/kalkulator-serwer/serwer.mjs lista` |
-| Dziennik usługi | `journalctl -u kalkulator-walut -n 50` |
-
-Usługa działa na osobnym koncie bez uprawnień, z odebranym dostępem do reszty
-systemu (`vps/kalkulator-walut.service`). Pliki spoza katalogu aplikacji i pliki
-ukryte są niedostępne; pliki z `/assets/` (ze skrótem treści w nazwie)
-przeglądarka trzyma w pamięci, reszta jest sprawdzana przy każdym wejściu.
+| Nowe hasło administratora (np. gdy zapomnisz) | `bash /opt/kalkulator/admin.sh <identyfikator>` |
+| Dziennik | `docker logs kalkulator` |
+| Odczyt konfiguracji serwera (niczego nie zmienia) | `curl -fsSL https://raw.githubusercontent.com/jedrzejrakowski/Kalkulator-Walut/main/vps/diagnostyka.sh \| bash` |
+| Nowszy obraz Node.js | `docker compose -f /opt/kalkulator/docker-compose.yml pull && docker compose -f /opt/kalkulator/docker-compose.yml up -d` |
 
 Próba na własnym komputerze:
 
 ```bash
 npm run build:vps
-STAN=./stan NOWE_HASLO='dlugie-haslo-proby' node dist-vps/serwer.mjs admin ja
+STAN=./stan NOWE_HASLO='dlugie-haslo-proby' node dist-vps/serwer.mjs admin admin
 STAN=./stan PORT=8080 node dist-vps/serwer.mjs     # http://localhost:8080
 ```
 
@@ -369,7 +393,9 @@ vps/            serwer na VPS
   uzytkownicy.ts konta: skróty haseł, zasady, plik na dysku
   serwer.ts     ochrona.ts + wydawanie plików z dist/
   start.ts      uruchomienie i polecenia admin / lista
-  admin.sh      założenie administratora na serwerze
+  instaluj.sh   instalacja na serwerze z Caddy w Dockerze
+  caddyfile.py  przestawienie strony kalkulatora w Caddyfile
+  admin.sh      konto administratora na serwerze
   diagnostyka.sh odczyt konfiguracji serwera
 public/logowanie.html  ekran logowania, samodzielny plik
 ```

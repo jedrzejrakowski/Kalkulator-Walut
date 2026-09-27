@@ -85,8 +85,10 @@ services:
     mem_limit: 256m
     networks: [web]
 volumes:
+  # Tworzy go instaluj.sh; „external" chroni konta przed „docker compose down -v".
   stan:
     name: kalkulator_stan
+    external: true
 networks:
   web:
     external: true
@@ -145,6 +147,7 @@ fi
 curl -fsSL "$SUROWE/admin.sh" -o "$PROJEKT/admin.sh"
 
 krok "Caddy: strona kalkulatora przez logowanie"
+kopia=""
 curl -fsSL "$SUROWE/caddyfile.py" -o "$TYMCZASOWY/caddyfile.py"
 set +e
 adres=$(python3 "$TYMCZASOWY/caddyfile.py" "$CADDYFILE" "$TYMCZASOWY/Caddyfile")
@@ -182,7 +185,7 @@ krok "Sprawdzenie"
 domena=${adres%%[ ,]*}
 domena=${domena#*://}
 domena=${domena%%:*}
-kod=$(curl -sk --resolve "$domena:443:127.0.0.1" -o /dev/null -w '%{http_code} %{redirect_url}' \
+kod=$(curl -sk --noproxy '*' --resolve "$domena:443:127.0.0.1" -o /dev/null -w '%{http_code} %{redirect_url}' \
   -H 'Accept: text/html' "https://$domena/" || true)
 case $kod in
   "302 "*logowanie.html*) echo "https://$domena prosi o logowanie." ;;
@@ -196,5 +199,8 @@ Zaloguj się jako administrator — kolejne osoby dodasz w aplikacji, na ekranie
 
   Nowe hasło administratora (np. gdy zapomnisz):  bash $PROJEKT/admin.sh <identyfikator>
   Dziennik:                                        docker logs kalkulator
-  Cofnięcie w Caddy:                               cat <kopia> > $CADDYFILE && docker exec $KONTENER_CADDY caddy reload --config /etc/caddy/Caddyfile
 KONIEC
+if [ -n "$kopia" ]; then
+  echo "  Powrót do podawania samych plików (bez logowania):"
+  echo "    cat $kopia > $CADDYFILE && docker exec $KONTENER_CADDY caddy reload --config /etc/caddy/Caddyfile"
+fi

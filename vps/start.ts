@@ -77,7 +77,7 @@ async function serwer(): Promise<void> {
   const host = process.env.HOST ?? '127.0.0.1';
 
   if ((await magazyn.wszyscy()).length === 0) {
-    console.error('Brak kont — kalkulator będzie odmawiał dostępu. Załóż administratora: sudo bash vps/admin.sh <login>');
+    console.error('Brak kont — kalkulator odmawia dostępu, dopóki administrator nie założy pierwszego konta (bash /opt/kalkulator/admin.sh <identyfikator>).');
   }
 
   const s = utworzSerwer({ katalog, kontekst: { magazyn, klucz } });
