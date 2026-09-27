@@ -6,21 +6,21 @@ import type { Kontekst } from '../ochrona';
 import { Magazyn, skrotHasla, type Uzytkownik } from '../uzytkownicy';
 
 export const HASLO_ADMINA = 'jesienne-liscie-nad-wisla';
-export const HASLO_ANNY = 'zielona-herbata-o-poranku';
+export const HASLO_BIURA = 'zielona-herbata-o-poranku';
 
 let skroty: Promise<[string, string]> | null = null;
 
 /** Skróty liczone raz — scrypt celowo jest wolny. */
 export function gotoweSkroty(): Promise<[string, string]> {
-  skroty ??= Promise.all([skrotHasla(HASLO_ADMINA), skrotHasla(HASLO_ANNY)]);
+  skroty ??= Promise.all([skrotHasla(HASLO_ADMINA), skrotHasla(HASLO_BIURA)]);
   return skroty;
 }
 
 export async function konta(): Promise<Uzytkownik[]> {
-  const [admin, anna] = await gotoweSkroty();
+  const [admin, biuro] = await gotoweSkroty();
   return [
-    { login: 'jedrzej', admin: true, haslo: admin, wymagaZmiany: false },
-    { login: 'anna.nowak', admin: false, haslo: anna, wymagaZmiany: false },
+    { login: 'biuro1', admin: true, haslo: admin, wymagaZmiany: false },
+    { login: 'biuro2', admin: false, haslo: biuro, wymagaZmiany: false },
   ];
 }
 

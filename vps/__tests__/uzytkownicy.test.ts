@@ -37,31 +37,31 @@ describe('skróty haseł', () => {
 describe('plik kont', () => {
   it('zapis trafia na dysk z prawami tylko dla właściciela, bez plików tymczasowych', async () => {
     s = await srodowisko();
-    const [, anna] = await konta();
-    await s.magazyn.zmien((l) => dodaj(l.filter((u) => u.login !== 'anna.nowak'), { ...anna!, login: 'piotr' }));
+    const [, biuro] = await konta();
+    await s.magazyn.zmien((l) => dodaj(l.filter((u) => u.login !== 'biuro2'), { ...biuro!, login: 'biuro3' }));
     const plik = s.magazyn.plik;
     expect(((await stat(plik)).mode & 0o777).toString(8)).toBe('600');
     expect(await readdir(path.dirname(plik))).toEqual(['uzytkownicy.json']);
     const zapisane = JSON.parse(await readFile(plik, 'utf8')) as { uzytkownicy: { login: string }[] };
-    expect(zapisane.uzytkownicy.map((u) => u.login)).toEqual(['jedrzej', 'piotr']);
+    expect(zapisane.uzytkownicy.map((u) => u.login)).toEqual(['biuro1', 'biuro3']);
     // Drugi odczyt z dysku — nowy obiekt, te same konta.
-    expect((await new Magazyn(plik).wszyscy()).map((u) => u.login)).toEqual(['jedrzej', 'piotr']);
+    expect((await new Magazyn(plik).wszyscy()).map((u) => u.login)).toEqual(['biuro1', 'biuro3']);
   });
 
   it('zmiana pliku z zewnątrz (polecenie w terminalu) działa bez restartu', async () => {
     s = await srodowisko();
-    expect(await s.magazyn.znajdz('anna.nowak')).toBeDefined();
+    expect(await s.magazyn.znajdz('biuro2')).toBeDefined();
     const [admin] = await konta();
     await new Promise((r) => setTimeout(r, 20));
     await writeFile(s.magazyn.plik, JSON.stringify({ uzytkownicy: [admin] }));
-    expect(await s.magazyn.znajdz('anna.nowak')).toBeUndefined();
+    expect(await s.magazyn.znajdz('biuro2')).toBeUndefined();
   });
 
   it('równoczesne zmiany nie gubią się nawzajem', async () => {
     s = await srodowisko();
-    const [, anna] = await konta();
+    const [, biuro] = await konta();
     await Promise.all(
-      ['a1', 'a2', 'a3', 'a4', 'a5'].map((login) => s.magazyn.zmien((l) => dodaj(l, { ...anna!, login }))),
+      ['a1', 'a2', 'a3', 'a4', 'a5'].map((login) => s.magazyn.zmien((l) => dodaj(l, { ...biuro!, login }))),
     );
     expect((await new Magazyn(s.magazyn.plik).wszyscy()).length).toBe(7);
   });
@@ -71,8 +71,8 @@ describe('plik kont', () => {
     await expect(s.magazyn.zmien(() => {
       throw new Error('przerwane');
     })).rejects.toThrow('przerwane');
-    const [, anna] = await konta();
-    await s.magazyn.zmien((l) => dodaj(l, { ...anna!, login: 'po.bledzie' }));
+    const [, biuro] = await konta();
+    await s.magazyn.zmien((l) => dodaj(l, { ...biuro!, login: 'po.bledzie' }));
     expect((await new Magazyn(s.magazyn.plik).wszyscy()).length).toBe(3);
   });
 
@@ -82,15 +82,15 @@ describe('plik kont', () => {
     await expect(new Magazyn(s.magazyn.plik).wszyscy()).rejects.toThrow('uszkodzony');
   });
 
-  it('pola spoza modelu (np. imię z ręcznej edycji) nie przechodzą dalej ani nie wracają na dysk', async () => {
+  it('pola spoza modelu (np. dopisane ręcznie) nie przechodzą dalej ani nie wracają na dysk', async () => {
     s = await srodowisko();
     const [admin] = await konta();
-    await writeFile(s.magazyn.plik, JSON.stringify({ uzytkownicy: [{ ...admin, nazwa: 'Jan Kowalski', email: 'jan@example.com' }] }));
+    await writeFile(s.magazyn.plik, JSON.stringify({ uzytkownicy: [{ ...admin, nazwa: 'Imie Nazwisko', email: 'ktos@example.com' }] }));
     const m = new Magazyn(s.magazyn.plik);
     expect(Object.keys((await m.wszyscy())[0]!).sort()).toEqual(['admin', 'haslo', 'login', 'wymagaZmiany']);
     await m.zmien((l) => [...l]);
     const naDysku = await readFile(s.magazyn.plik, 'utf8');
-    expect(naDysku).not.toContain('Kowalski');
+    expect(naDysku).not.toContain('Nazwisko');
     expect(naDysku).not.toContain('example.com');
   });
 

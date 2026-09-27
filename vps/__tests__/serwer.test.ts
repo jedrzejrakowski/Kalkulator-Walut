@@ -99,23 +99,23 @@ describe('serwer na VPS', () => {
     const zle = await zapytaj(port, '/api/logowanie', {
       metoda: 'POST',
       naglowki: { 'content-type': 'application/x-www-form-urlencoded' },
-      tresc: 'login=jedrzej&haslo=zgaduje&powrot=%2F',
+      tresc: 'login=biuro1&haslo=zgaduje&powrot=%2F',
     });
     expect(zle.status).toBe(303);
-    expect(zle.naglowki.location).toBe('/logowanie.html?blad=1&powrot=%2F&login=jedrzej');
+    expect(zle.naglowki.location).toBe('/logowanie.html?blad=1&powrot=%2F&login=biuro1');
     expect(zle.naglowki['set-cookie']).toBeUndefined();
 
     const dobre = await zapytaj(port, '/api/logowanie', {
       metoda: 'POST',
       naglowki: { 'content-type': 'application/x-www-form-urlencoded' },
-      tresc: `login=jedrzej&haslo=${encodeURIComponent(HASLO_ADMINA)}&zapamietaj=1&powrot=%2F`,
+      tresc: `login=biuro1&haslo=${encodeURIComponent(HASLO_ADMINA)}&zapamietaj=1&powrot=%2F`,
     });
     expect(dobre.status).toBe(303);
     expect(dobre.naglowki.location).toBe('/');
     const ciastka = dobre.naglowki['set-cookie']!;
     expect(ciastka).toHaveLength(2);
     expect(ciastka[0]).toMatch(/^kw_sesja=v2\..*HttpOnly; Secure; SameSite=Lax; Max-Age=2592000$/);
-    expect(ciastka[1]).toMatch(/^kw_zalogowany=jedrzej;/);
+    expect(ciastka[1]).toMatch(/^kw_zalogowany=biuro1;/);
 
     const zeton = ciastka[0]!.split(';')[0]!;
     const aplikacja = await zapytaj(port, '/', { naglowki: { ...STRONA, cookie: zeton } });

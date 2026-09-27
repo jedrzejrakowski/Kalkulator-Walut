@@ -9,7 +9,7 @@ import {
   wydajZeton,
 } from '../ochrona';
 import type { Uzytkownik } from '../uzytkownicy';
-import { gotoweSkroty, HASLO_ADMINA, HASLO_ANNY, konta, srodowisko, type Srodowisko } from './pomoc';
+import { gotoweSkroty, HASLO_ADMINA, HASLO_BIURA, konta, srodowisko, type Srodowisko } from './pomoc';
 
 const TERAZ = Date.UTC(2026, 8, 27, 12, 0, 0);
 const ADRES = 'https://kalkulator.apkownia.cloud';
@@ -92,32 +92,32 @@ describe('logowanie', () => {
     s.kontekst.czekaj = async (ms) => {
       kary.push(ms);
     };
-    const zle = await zaloguj('jedrzej', 'zgaduje-sobie-haslo');
+    const zle = await zaloguj('biuro1', 'zgaduje-sobie-haslo');
     const brak = await zaloguj('nikt', 'zgaduje-sobie-haslo');
     expect(kary).toEqual([KARA_ZA_BLAD, KARA_ZA_BLAD]);
-    for (const [o, login] of [[zle, 'jedrzej'], [brak, 'nikt']] as const) {
+    for (const [o, login] of [[zle, 'biuro1'], [brak, 'nikt']] as const) {
       expect(o.status).toBe(303);
       expect(o.headers.get('location')).toBe(`/logowanie.html?blad=1&powrot=%2F&login=${login}`);
       expect(o.headers.getSetCookie()).toEqual([]);
     }
     // Hasło innej osoby nie otwiera konta.
-    expect((await zaloguj('jedrzej', HASLO_ANNY)).headers.get('location')).toContain('blad=1');
+    expect((await zaloguj('biuro1', HASLO_BIURA)).headers.get('location')).toContain('blad=1');
   });
 
   it('dobre hasło: sesja na 12 godzin, identyfikator w jawnym ciasteczku; wielkość liter w identyfikatorze bez znaczenia', async () => {
     s = await srodowisko(undefined, () => TERAZ);
-    const o = await zaloguj('  Anna.Nowak ', HASLO_ANNY);
+    const o = await zaloguj('  Biuro2 ', HASLO_BIURA);
     expect(o.status).toBe(303);
     expect(o.headers.get('location')).toBe('/');
     const [sesja, znacznik] = o.headers.getSetCookie();
-    expect(sesja).toMatch(/^kw_sesja=v2\.\d+\.[\w-]{43}\.anna\.nowak; Path=\/; HttpOnly; Secure; SameSite=Lax$/);
-    expect(znacznik).toBe('kw_zalogowany=anna.nowak; Path=/; Secure; SameSite=Lax');
+    expect(sesja).toMatch(/^kw_sesja=v2\.\d+\.[\w-]{43}\.biuro2; Path=\/; HttpOnly; Secure; SameSite=Lax$/);
+    expect(znacznik).toBe('kw_zalogowany=biuro2; Path=/; Secure; SameSite=Lax');
     expect(sesja).toContain(`v2.${TERAZ + WAZNOSC_SESJI}.`);
   });
 
   it('„Zapamiętaj na tym urządzeniu" daje 30 dni', async () => {
     s = await srodowisko(undefined, () => TERAZ);
-    const o = await zaloguj('jedrzej', HASLO_ADMINA, { zapamietaj: '1' });
+    const o = await zaloguj('biuro1', HASLO_ADMINA, { zapamietaj: '1' });
     for (const c of o.headers.getSetCookie()) expect(c).toMatch(/; Max-Age=2592000$/);
     expect(sesjaZ(o)).toContain(`v2.${TERAZ + WAZNOSC_ZAPAMIETANIA}.`);
   });
@@ -158,10 +158,10 @@ describe('sesja', () => {
     const [, wygasa, podpis, login] = dobry.split('.');
     const podrobione = [
       `v2.${Number(wygasa) + WAZNOSC_ZAPAMIETANIA}.${podpis}.${login}`, // przedłużony termin
-      `v2.${wygasa}.${podpis}.anna.nowak`, // cudzy identyfikator
+      `v2.${wygasa}.${podpis}.biuro2`, // cudzy identyfikator
       `v2.${wygasa}.${podpis!.replace(/^./, (z) => (z === 'A' ? 'B' : 'A'))}.${login}`,
       wydajZeton(Buffer.alloc(32, 8), admin!, TERAZ + WAZNOSC_SESJI), // obcy klucz
-      'kw_zalogowany=jedrzej',
+      'kw_zalogowany=biuro1',
       '',
     ];
     for (const z of podrobione) {
@@ -173,14 +173,14 @@ describe('sesja', () => {
 
   it('sam jawny znacznik nie wystarcza do wejścia', async () => {
     s = await srodowisko();
-    expect((await obsluz(strona('/', 'kw_zalogowany=jedrzej'), s.kontekst))!.status).toBe(302);
+    expect((await obsluz(strona('/', 'kw_zalogowany=biuro1'), s.kontekst))!.status).toBe(302);
   });
 });
 
 describe('API', () => {
   it('bez nagłówka aplikacji albo z cudzej strony — odmowa, nawet z ważną sesją', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('jedrzej', HASLO_ADMINA);
+    const sesja = await zalogowany('biuro1', HASLO_ADMINA);
     expect((await obsluz(api('GET', '/api/ja', sesja, undefined, {} as typeof API), s.kontekst))!.status).toBe(403);
     const zCudzej = { 'x-kalkulator': '1', 'sec-fetch-site': 'cross-site' };
     expect((await obsluz(api('GET', '/api/ja', sesja, undefined, zCudzej), s.kontekst))!.status).toBe(403);
@@ -189,21 +189,21 @@ describe('API', () => {
 
   it('/api/ja opisuje konto bez skrótu hasła', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('anna.nowak', HASLO_ANNY);
+    const sesja = await zalogowany('biuro2', HASLO_BIURA);
     const o = (await obsluz(api('GET', '/api/ja', sesja), s.kontekst))!;
     expect(o.status).toBe(200);
     const ja = (await o.json()) as Record<string, unknown>;
-    expect(ja).toEqual({ login: 'anna.nowak', admin: false, wymagaZmiany: false });
+    expect(ja).toEqual({ login: 'biuro2', admin: false, wymagaZmiany: false });
   });
 
   it('zwykły użytkownik nie ma dostępu do listy kont', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('anna.nowak', HASLO_ANNY);
+    const sesja = await zalogowany('biuro2', HASLO_BIURA);
     for (const [m, p, d] of [
       ['GET', '/api/uzytkownicy'],
       ['POST', '/api/uzytkownicy', { login: 'ktos', haslo: 'dlugie-haslo-testowe' }],
-      ['DELETE', '/api/uzytkownicy/jedrzej'],
-      ['PATCH', '/api/uzytkownicy/anna.nowak', { admin: true }],
+      ['DELETE', '/api/uzytkownicy/biuro1'],
+      ['PATCH', '/api/uzytkownicy/biuro2', { admin: true }],
     ] as const) {
       expect((await obsluz(api(m, p, sesja, d), s.kontekst))!.status, `${m} ${p}`).toBe(403);
     }
@@ -213,12 +213,12 @@ describe('API', () => {
 describe('zmiana własnego hasła', () => {
   it('wymaga obecnego hasła i sensownego nowego', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('anna.nowak', HASLO_ANNY);
+    const sesja = await zalogowany('biuro2', HASLO_BIURA);
     const proby: [unknown, string][] = [
-      [{ stare: 'nie-to-haslo-wcale', nowe: 'calkiem-nowe-haslo-anny' }, 'Obecne hasło się nie zgadza.'],
-      [{ stare: HASLO_ANNY, nowe: 'krotkie' }, 'co najmniej 12 znaków'],
-      [{ stare: HASLO_ANNY, nowe: 'anna.nowak-i-cos-jeszcze' }, 'identyfikatora'],
-      [{ stare: HASLO_ANNY, nowe: HASLO_ANNY }, 'inne niż obecne'],
+      [{ stare: 'nie-to-haslo-wcale', nowe: 'calkiem-nowe-haslo-biura' }, 'Obecne hasło się nie zgadza.'],
+      [{ stare: HASLO_BIURA, nowe: 'krotkie' }, 'co najmniej 12 znaków'],
+      [{ stare: HASLO_BIURA, nowe: 'biuro2-i-cos-jeszcze' }, 'identyfikatora'],
+      [{ stare: HASLO_BIURA, nowe: HASLO_BIURA }, 'inne niż obecne'],
     ];
     for (const [dane, komunikat] of proby) {
       const o = (await obsluz(api('POST', '/api/haslo', sesja, dane), s.kontekst))!;
@@ -229,11 +229,11 @@ describe('zmiana własnego hasła', () => {
 
   it('po zmianie stare sesje wygasają, a bieżąca dostaje nowe ciasteczko', async () => {
     s = await srodowisko(undefined, () => TERAZ);
-    const naLaptopie = await zalogowany('anna.nowak', HASLO_ANNY);
-    const naTelefonie = await zalogowany('anna.nowak', HASLO_ANNY);
-    const admina = await zalogowany('jedrzej', HASLO_ADMINA);
+    const naLaptopie = await zalogowany('biuro2', HASLO_BIURA);
+    const naTelefonie = await zalogowany('biuro2', HASLO_BIURA);
+    const admina = await zalogowany('biuro1', HASLO_ADMINA);
 
-    const o = (await obsluz(api('POST', '/api/haslo', naLaptopie, { stare: HASLO_ANNY, nowe: 'nowe haslo anny 2026' }), s.kontekst))!;
+    const o = (await obsluz(api('POST', '/api/haslo', naLaptopie, { stare: HASLO_BIURA, nowe: 'nowe haslo biura 2026' }), s.kontekst))!;
     expect(o.status).toBe(200);
     const nowa = sesjaZ(o);
     // Termin bez zmian; bez „zapamiętaj" ciasteczko nadal sesyjne.
@@ -245,8 +245,8 @@ describe('zmiana własnego hasła', () => {
     // Cudze sesje zostają.
     expect(await obsluz(strona('/', admina), s.kontekst)).toBeNull();
 
-    expect((await zaloguj('anna.nowak', HASLO_ANNY)).headers.get('location')).toContain('blad=1');
-    expect((await zaloguj('anna.nowak', 'nowe haslo anny 2026')).headers.get('location')).toBe('/');
+    expect((await zaloguj('biuro2', HASLO_BIURA)).headers.get('location')).toContain('blad=1');
+    expect((await zaloguj('biuro2', 'nowe haslo biura 2026')).headers.get('location')).toBe('/');
   });
 });
 
@@ -256,13 +256,13 @@ describe('hasło startowe od administratora', () => {
     lista[1]!.wymagaZmiany = true;
     lista[1]!.admin = true;
     s = await srodowisko(lista);
-    const sesja = await zalogowany('anna.nowak', HASLO_ANNY);
+    const sesja = await zalogowany('biuro2', HASLO_BIURA);
 
     expect((await obsluz(api('GET', '/api/uzytkownicy', sesja), s.kontekst))!.status).toBe(403);
     const ja = (await (await obsluz(api('GET', '/api/ja', sesja), s.kontekst))!.json()) as { wymagaZmiany: boolean };
     expect(ja.wymagaZmiany).toBe(true);
 
-    const o = (await obsluz(api('POST', '/api/haslo', sesja, { stare: HASLO_ANNY, nowe: 'wlasne haslo anny 2026' }), s.kontekst))!;
+    const o = (await obsluz(api('POST', '/api/haslo', sesja, { stare: HASLO_BIURA, nowe: 'wlasne haslo biura 2026' }), s.kontekst))!;
     expect(((await o.json()) as { wymagaZmiany: boolean }).wymagaZmiany).toBe(false);
     expect((await obsluz(api('GET', '/api/uzytkownicy', sesjaZ(o)), s.kontekst))!.status).toBe(200);
   });
@@ -271,33 +271,33 @@ describe('hasło startowe od administratora', () => {
 describe('panel administratora', () => {
   it('lista kont bez skrótów haseł', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('jedrzej', HASLO_ADMINA);
+    const sesja = await zalogowany('biuro1', HASLO_ADMINA);
     const lista = (await (await obsluz(api('GET', '/api/uzytkownicy', sesja), s.kontekst))!.json()) as Record<string, unknown>[];
-    expect(lista.map((u) => u.login)).toEqual(['jedrzej', 'anna.nowak']);
+    expect(lista.map((u) => u.login)).toEqual(['biuro1', 'biuro2']);
     expect(lista.every((u) => !('haslo' in u))).toBe(true);
   });
 
   it('dodaje konto z hasłem startowym; nowa osoba loguje się i musi je zmienić', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('jedrzej', HASLO_ADMINA);
-    const o = (await obsluz(api('POST', '/api/uzytkownicy', sesja, { login: ' Biuro2 ', haslo: 'startowe-haslo-biura', admin: false }), s.kontekst))!;
+    const sesja = await zalogowany('biuro1', HASLO_ADMINA);
+    const o = (await obsluz(api('POST', '/api/uzytkownicy', sesja, { login: ' Biuro3 ', haslo: 'startowe-haslo-trzy', admin: false }), s.kontekst))!;
     expect(o.status).toBe(201);
-    expect(await o.json()).toEqual({ login: 'biuro2', admin: false, wymagaZmiany: true });
+    expect(await o.json()).toEqual({ login: 'biuro3', admin: false, wymagaZmiany: true });
 
-    const jego = await zalogowany('biuro2', 'startowe-haslo-biura');
+    const jego = await zalogowany('biuro3', 'startowe-haslo-trzy');
     const ja = (await (await obsluz(api('GET', '/api/ja', jego), s.kontekst))!.json()) as { wymagaZmiany: boolean };
     expect(ja.wymagaZmiany).toBe(true);
   });
 
   it('odrzuca zły identyfikator, słabe hasło i zajęty identyfikator', async () => {
     s = await srodowisko();
-    const sesja = await zalogowany('jedrzej', HASLO_ADMINA);
+    const sesja = await zalogowany('biuro1', HASLO_ADMINA);
     const proby: [unknown, number][] = [
       [{ login: 'ł', haslo: 'dlugie-haslo-testowe' }, 400],
-      [{ login: 'jan kowalski', haslo: 'dlugie-haslo-testowe' }, 400],
+      [{ login: 'biuro dwa', haslo: 'dlugie-haslo-testowe' }, 400],
       [{ login: '-jan', haslo: 'dlugie-haslo-testowe' }, 400],
       [{ login: 'jan', haslo: 'krotkie' }, 400],
-      [{ login: 'Anna.Nowak', haslo: 'dlugie-haslo-testowe' }, 409],
+      [{ login: 'Biuro2', haslo: 'dlugie-haslo-testowe' }, 409],
       ['nie obiekt', 400],
     ];
     for (const [dane, status] of proby) {
@@ -308,47 +308,47 @@ describe('panel administratora', () => {
 
   it('reset hasła: stare sesje tej osoby wygasają, nowe hasło jest startowe', async () => {
     s = await srodowisko();
-    const admin = await zalogowany('jedrzej', HASLO_ADMINA);
-    const anny = await zalogowany('anna.nowak', HASLO_ANNY);
-    const o = (await obsluz(api('POST', '/api/uzytkownicy/anna.nowak/haslo', admin, { haslo: 'reset-hasla-anny-01' }), s.kontekst))!;
+    const admin = await zalogowany('biuro1', HASLO_ADMINA);
+    const biura = await zalogowany('biuro2', HASLO_BIURA);
+    const o = (await obsluz(api('POST', '/api/uzytkownicy/biuro2/haslo', admin, { haslo: 'reset-hasla-biura-01' }), s.kontekst))!;
     expect(o.status).toBe(200);
     expect(await o.json()).toMatchObject({ wymagaZmiany: true });
-    expect((await obsluz(strona('/', anny), s.kontekst))!.status).toBe(302);
+    expect((await obsluz(strona('/', biura), s.kontekst))!.status).toBe(302);
     expect(await obsluz(strona('/', admin), s.kontekst)).toBeNull();
-    expect((await zaloguj('anna.nowak', 'reset-hasla-anny-01')).headers.get('location')).toBe('/');
+    expect((await zaloguj('biuro2', 'reset-hasla-biura-01')).headers.get('location')).toBe('/');
     // Własne hasło administrator zmienia jak każdy — ze starym hasłem.
-    expect((await obsluz(api('POST', '/api/uzytkownicy/jedrzej/haslo', admin, { haslo: 'reset-wlasnego-hasla' }), s.kontekst))!.status).toBe(400);
+    expect((await obsluz(api('POST', '/api/uzytkownicy/biuro1/haslo', admin, { haslo: 'reset-wlasnego-hasla' }), s.kontekst))!.status).toBe(400);
   });
 
   it('uprawnienia i usuwanie: zawsze zostaje administrator, nie da się usunąć siebie', async () => {
     s = await srodowisko();
-    const admin = await zalogowany('jedrzej', HASLO_ADMINA);
-    const anny = await zalogowany('anna.nowak', HASLO_ANNY);
+    const admin = await zalogowany('biuro1', HASLO_ADMINA);
+    const biura = await zalogowany('biuro2', HASLO_BIURA);
 
     const zmien = (login: string, dane: unknown) => obsluz(api('PATCH', `/api/uzytkownicy/${login}`, admin, dane), s.kontekst);
-    expect((await zmien('jedrzej', { admin: false }))!.status).toBe(400);
-    expect((await obsluz(api('DELETE', '/api/uzytkownicy/jedrzej', admin), s.kontekst))!.status).toBe(400);
+    expect((await zmien('biuro1', { admin: false }))!.status).toBe(400);
+    expect((await obsluz(api('DELETE', '/api/uzytkownicy/biuro1', admin), s.kontekst))!.status).toBe(400);
     expect((await obsluz(api('DELETE', '/api/uzytkownicy/nikt', admin), s.kontekst))!.status).toBe(404);
 
-    expect((await zmien('anna.nowak', { nazwa: 'Anna' }))!.status).toBe(400);
-    const awans = await zmien('anna.nowak', { admin: true });
-    expect(await awans!.json()).toEqual({ login: 'anna.nowak', admin: true, wymagaZmiany: false });
+    expect((await zmien('biuro2', { nazwa: 'cokolwiek' }))!.status).toBe(400);
+    const awans = await zmien('biuro2', { admin: true });
+    expect(await awans!.json()).toEqual({ login: 'biuro2', admin: true, wymagaZmiany: false });
     // Uprawnienia działają od razu, bez ponownego logowania.
-    expect((await obsluz(api('GET', '/api/uzytkownicy', anny), s.kontekst))!.status).toBe(200);
+    expect((await obsluz(api('GET', '/api/uzytkownicy', biura), s.kontekst))!.status).toBe(200);
 
-    expect((await obsluz(api('DELETE', '/api/uzytkownicy/anna.nowak', admin), s.kontekst))!.status).toBe(204);
-    expect((await obsluz(strona('/', anny), s.kontekst))!.status).toBe(302);
-    expect((await s.magazyn.wszyscy()).map((u: Uzytkownik) => u.login)).toEqual(['jedrzej']);
+    expect((await obsluz(api('DELETE', '/api/uzytkownicy/biuro2', admin), s.kontekst))!.status).toBe(204);
+    expect((await obsluz(strona('/', biura), s.kontekst))!.status).toBe(302);
+    expect((await s.magazyn.wszyscy()).map((u: Uzytkownik) => u.login)).toEqual(['biuro1']);
   });
 
   it('konto usunięte przez innego administratora nie może się już usunąć samo', async () => {
     const lista = await konta();
     lista[1]!.admin = true;
     s = await srodowisko(lista);
-    const anny = await zalogowany('anna.nowak', HASLO_ANNY);
-    const admin = await zalogowany('jedrzej', HASLO_ADMINA);
-    expect((await obsluz(api('DELETE', '/api/uzytkownicy/anna.nowak', admin), s.kontekst))!.status).toBe(204);
+    const biura = await zalogowany('biuro2', HASLO_BIURA);
+    const admin = await zalogowany('biuro1', HASLO_ADMINA);
+    expect((await obsluz(api('DELETE', '/api/uzytkownicy/biuro2', admin), s.kontekst))!.status).toBe(204);
     // Ostatni administrator nie może zostać usunięty przez usuniętą już sesję.
-    expect((await obsluz(api('DELETE', '/api/uzytkownicy/jedrzej', anny), s.kontekst))!.status).toBe(401);
+    expect((await obsluz(api('DELETE', '/api/uzytkownicy/biuro1', biura), s.kontekst))!.status).toBe(401);
   });
 });

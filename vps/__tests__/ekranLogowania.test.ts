@@ -68,11 +68,11 @@ describe('ekran logowania', () => {
 
 describe('znacznik logowania w aplikacji', () => {
   it('odczytuje identyfikator z jawnego ciasteczka', () => {
-    expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=anna.nowak`)).toBe('anna.nowak');
-    expect(zalogowanyJako(`motyw=ciemny; ${CIASTKO_ZNACZNIK}=jedrzej; inne=2`)).toBe('jedrzej');
+    expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=biuro2`)).toBe('biuro2');
+    expect(zalogowanyJako(`motyw=ciemny; ${CIASTKO_ZNACZNIK}=biuro1; inne=2`)).toBe('biuro1');
     expect(zalogowanyJako('')).toBeNull();
     expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=`)).toBeNull();
-    expect(zalogowanyJako(`x${CIASTKO_ZNACZNIK}=jedrzej`)).toBeNull();
+    expect(zalogowanyJako(`x${CIASTKO_ZNACZNIK}=biuro1`)).toBeNull();
     // Coś, co nie jest identyfikatorem, nie trafi do klucza historii.
     expect(zalogowanyJako(`${CIASTKO_ZNACZNIK}=..%2F`)).toBeNull();
   });

@@ -111,15 +111,15 @@ describe('historia osobna dla każdej osoby', () => {
   beforeEach(() => localStorage.clear());
 
   it('dwie osoby na jednym komputerze nie widzą nawzajem swoich przeliczeń', () => {
-    const anny = dopisz([], przeliczenie(), 1);
-    const piotra = dopisz([], przeliczenie({ kwota: 7 }), 2);
-    zapisz(anny, kluczHistorii('anna'));
-    zapisz(piotra, kluczHistorii('piotr'));
-    expect(wczytaj(kluczHistorii('anna'))).toEqual(anny);
-    expect(wczytaj(kluczHistorii('piotr'))).toEqual(piotra);
-    wyczysc(kluczHistorii('anna'));
-    expect(wczytaj(kluczHistorii('anna'))).toEqual([]);
-    expect(wczytaj(kluczHistorii('piotr'))).toEqual(piotra);
+    const pierwszego = dopisz([], przeliczenie(), 1);
+    const drugiego = dopisz([], przeliczenie({ kwota: 7 }), 2);
+    zapisz(pierwszego, kluczHistorii('biuro1'));
+    zapisz(drugiego, kluczHistorii('biuro2'));
+    expect(wczytaj(kluczHistorii('biuro1'))).toEqual(pierwszego);
+    expect(wczytaj(kluczHistorii('biuro2'))).toEqual(drugiego);
+    wyczysc(kluczHistorii('biuro1'));
+    expect(wczytaj(kluczHistorii('biuro1'))).toEqual([]);
+    expect(wczytaj(kluczHistorii('biuro2'))).toEqual(drugiego);
   });
 
   it('bez logowania zostaje historia wspólna', () => {
@@ -129,19 +129,19 @@ describe('historia osobna dla każdej osoby', () => {
   it('historia sprzed kont przechodzi na pierwszą zalogowaną osobę i znika ze wspólnej', () => {
     const dawna = dopisz([], przeliczenie(), 1);
     zapisz(dawna);
-    przejmijWspolna('anna');
-    przejmijWspolna('piotr');
-    expect(wczytaj(kluczHistorii('anna'))).toEqual(dawna);
-    expect(wczytaj(kluczHistorii('piotr'))).toEqual([]);
+    przejmijWspolna('biuro1');
+    przejmijWspolna('biuro2');
+    expect(wczytaj(kluczHistorii('biuro1'))).toEqual(dawna);
+    expect(wczytaj(kluczHistorii('biuro2'))).toEqual([]);
     expect(wczytaj()).toEqual([]);
   });
 
   it('nie nadpisuje historii, którą osoba już ma', () => {
     const wlasna = dopisz([], przeliczenie({ kwota: 5 }), 3);
-    zapisz(wlasna, kluczHistorii('anna'));
+    zapisz(wlasna, kluczHistorii('biuro1'));
     zapisz(dopisz([], przeliczenie(), 1));
-    przejmijWspolna('anna');
-    expect(wczytaj(kluczHistorii('anna'))).toEqual(wlasna);
+    przejmijWspolna('biuro1');
+    expect(wczytaj(kluczHistorii('biuro1'))).toEqual(wlasna);
   });
 });
 
